@@ -14,6 +14,8 @@ var Body = function (body) {
   var joints = createJoints();
   var ts = Date.now();
 
+  this.joints = createJoints();
+
   // Update body joint and ts data
   this.update = function (body) {
     for (var j = 0; j < body.joints.length; j++) {
