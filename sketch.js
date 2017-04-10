@@ -18,7 +18,8 @@ var xscl, yscl;
 var xshift, yshift;
 var scl = true;
 
-var prevSkeletons = [];
+var oldSkeleton = [];
+
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
@@ -39,6 +40,10 @@ function setup() {
     yshift = height / 2;
 
     background(255);
+
+    for (var i = 0; i < 26; i++) {
+        oldSkeleton[i] = [];
+    }
 }
 
 function bodyTracked(body) {
@@ -53,19 +58,34 @@ function draw() {
     background(255);
 
     // Get array of bodies
+    // var bodies = bm.getBodies();
+    // for (var b = 0; b < bodies.length; b++) {
+    //     var body = bodies[b];
+
+    //     prevSkeletons.push(getPos(body.getPosition(kinectron.HEAD)));
+
+    //     if (prevSkeletons.length > 100) {
+    //         prevSkeletons.shift();
+    //     }
+    // }
+
     var bodies = bm.getBodies();
     for (var b = 0; b < bodies.length; b++) {
         var body = bodies[b];
 
-        prevSkeletons.push(getPos(body.getPosition(kinectron.HEAD)));
+        for (var j = 0; j < body.joints.length; j++) {
+            var oldJoints = oldSkeleton[j];
+            oldJoints.push(getPos(body.getPosition(j)));
 
-        if (prevSkeletons.length > 100) {
-            prevSkeletons.shift();
+            if (oldJoints.length > 100) {
+                oldJoints.shift();
+            }
         }
     }
 
     drawSkeleton();
 }
+
 
 function getPos(joint) {
     return createVector((joint.x * xscl) + xshift, (joint.y * yscl) + yshift);
@@ -75,17 +95,40 @@ function getPos(joint) {
 function drawSkeleton() {
     //console.log(prevSkeletons);
 
-    for (var i = 0; i < prevSkeletons.length; i++) {
-        var pos = prevSkeletons[i];
-        //console.log(pos);
+    for (var i = 0; i < oldSkeleton.length; i++) {
 
-        var opac = i/(prevSkeletons.length-1);
-        var color = 'rgba(50, 160, 200, ' + opac +')';
+        if (i!=7) {
 
-        fill(color);
-        noStroke();
-        ellipse(pos.x, pos.y, 10, 10);
+
+            var oldJoints = oldSkeleton[i];
+
+            var r = (255 / oldSkeleton.length) * i;
+
+            for (var j = 0; j < oldJoints.length; j++) {
+                var pos = oldJoints[j];
+
+                var opac = i / (oldJoints.length - 1) + 0.05;
+                var color = 'rgba(50, 160, 200, ' + opac + ')';
+
+                fill(color);
+                noStroke();
+                ellipse(pos.x, pos.y, 10, 10);
+
+                if (i == 0) {
+                    noFill();
+                    stroke(color);
+                    strokeWeight(5);
+                    line(pos.x, pos.y, oldSkeleton[1][j].x, oldSkeleton[1][j].y);
+                }
+            }
+
+        }
+
+
     }
+
+
+
 
     // }
 
