@@ -18,16 +18,19 @@ var xscl, yscl;
 var xshift, yshift;
 var scl = true;
 
+// variables for saving
 var oldSkeleton = [];
+var oldJointsNum = 50;
 
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
 
+    console.log("172.30.13.5");
 
     // KINECTRON SETUP
     // Define and create an instance of kinectron
-    kinectron = new Kinectron("172.30.5.103");
+    kinectron = new Kinectron("172.30.13.5");
     // Connect with application over peer
     kinectron.makeConnection();
 
@@ -41,6 +44,7 @@ function setup() {
 
     background(255);
 
+    // populate 2D array
     for (var i = 0; i < 26; i++) {
         oldSkeleton[i] = [];
     }
@@ -57,27 +61,16 @@ function bodyTracked(body) {
 function draw() {
     background(255);
 
-    // Get array of bodies
-    // var bodies = bm.getBodies();
-    // for (var b = 0; b < bodies.length; b++) {
-    //     var body = bodies[b];
-
-    //     prevSkeletons.push(getPos(body.getPosition(kinectron.HEAD)));
-
-    //     if (prevSkeletons.length > 100) {
-    //         prevSkeletons.shift();
-    //     }
-    // }
-
     var bodies = bm.getBodies();
     for (var b = 0; b < bodies.length; b++) {
         var body = bodies[b];
 
+        // save points to past-position array
         for (var j = 0; j < body.joints.length; j++) {
             var oldJoints = oldSkeleton[j];
             oldJoints.push(getPos(body.getPosition(j)));
 
-            if (oldJoints.length > 100) {
+            if (oldJoints.length > oldJointsNum) {
                 oldJoints.shift();
             }
         }
@@ -87,146 +80,110 @@ function draw() {
 }
 
 
-function getPos(joint) {
-    return createVector((joint.x * xscl) + xshift, (joint.y * yscl) + yshift);
-}
-
-
 function drawSkeleton() {
     //console.log(prevSkeletons);
 
     for (var i = 0; i < oldSkeleton.length; i++) {
 
-        if (i!=7) {
+        var oldJoints = oldSkeleton[i];
 
 
-            var oldJoints = oldSkeleton[i];
+        // draw shapes
+        if (i == 5) {
+            if (oldJoints.length > 49) {
 
-            var r = (255 / oldSkeleton.length) * i;
+                for (var j = 0; j < oldJoints.length; j++) {
+
+                    var opacIncr = 0.01;
+                    var opac = j * opacIncr;
+                    var color = 'rgba(50, 160, 200, ' + opac + ')';
+
+                    if (j < 47) {
+
+                        fill(color);
+                        noStroke();
+                        beginShape();
+                        vertex(oldSkeleton[5][j].x, oldSkeleton[5][j].y);
+                        vertex(oldSkeleton[5][j + 1].x, oldSkeleton[5][j + 1].y);
+                        vertex(oldSkeleton[6][j + 1].x, oldSkeleton[6][j + 1].y);
+                        vertex(oldSkeleton[6][j].x, oldSkeleton[6][j].y);
+                        endShape();
+                    }
+                }
+            }
+        }
+
+
+        // draw points
+        if ((i == 3) || (i == 6) || (i == 10)) {
 
             for (var j = 0; j < oldJoints.length; j++) {
                 var pos = oldJoints[j];
 
-                var opac = i / (oldJoints.length - 1) + 0.05;
+                var opacIncr = 0.01;
+                var opac = j * opacIncr;
                 var color = 'rgba(50, 160, 200, ' + opac + ')';
 
                 fill(color);
                 noStroke();
-                ellipse(pos.x, pos.y, 10, 10);
+                ellipse(pos.x, pos.y, 5, 5);
+            }
+        }
 
-                if (i == 0) {
-                    noFill();
-                    stroke(color);
-                    strokeWeight(5);
-                    line(pos.x, pos.y, oldSkeleton[1][j].x, oldSkeleton[1][j].y);
-                }
+        // draw bones
+        for (var j = 0; j < oldJoints.length; j++) {
+
+            var pos = oldJoints[j];
+
+            var opacIncr = 0.01;
+            var opac = j * opacIncr;
+            var color = 'rgba(50, 160, 200, ' + opac + ')';
+
+            noFill();
+            stroke(color);
+            strokeWeight(2);
+
+            switch (i) {
+                case 0: // spine base to neck
+                    line(pos.x, pos.y, oldSkeleton[2][j].x, oldSkeleton[2][j].y);
+                    break;
+                case 2: // neck to head 
+                    line(pos.x, pos.y, oldSkeleton[3][j].x, oldSkeleton[3][j].y);
+                    break;
+                case 4: // shoulders
+                    line(pos.x, pos.y, oldSkeleton[8][j].x, oldSkeleton[8][j].y);
+                    break;
+                case 5: // Left elbow
+                    line(pos.x, pos.y, oldSkeleton[4][j].x, oldSkeleton[4][j].y)
+                    line(pos.x, pos.y, oldSkeleton[6][j].x, oldSkeleton[6][j].y);
+                    break;
+                case 9: // right elbow
+                    line(pos.x, pos.y, oldSkeleton[8][j].x, oldSkeleton[8][j].y);
+                    line(pos.x, pos.y, oldSkeleton[10][j].x, oldSkeleton[10][j].y);
+                    break;
+                case 12: // hips
+                    line(pos.x, pos.y, oldSkeleton[16][j].x, oldSkeleton[16][j].y);
+                    break;
+                case 13: // left knee
+                    line(pos.x, pos.y, oldSkeleton[12][j].x, oldSkeleton[12][j].y);
+                    line(pos.x, pos.y, oldSkeleton[14][j].x, oldSkeleton[14][j].y);
+                    break;
+                case 17: // right knee
+                    line(pos.x, pos.y, oldSkeleton[16][j].x, oldSkeleton[16][j].y);
+                    line(pos.x, pos.y, oldSkeleton[18][j].x, oldSkeleton[18][j].y);
+                    break;
+
             }
 
         }
 
-
     }
 
-
-
-
-    // }
-
-    //  // Mid-line
-    //  var head = getPos(body.getPosition(kinectron.HEAD));
-    //  var neck = getPos(body.getPosition(kinectron.NECK));
-    //  var spineShoulder = getPos(body.getPosition(kinectron.SPINESHOULDER));
-    //  var spineMid = getPos(body.getPosition(kinectron.SPINEMID));
-    //  var spineBase = getPos(body.getPosition(kinectron.SPINEBASE));
-
-
-    //  // Right Arm
-    //  var shoulderRight = getPos(body.getPosition(kinectron.SHOULDERRIGHT));
-    //  var elbowRight = getPos(body.getPosition(kinectron.ELBOWRIGHT));
-    //  var wristRight = getPos(body.getPosition(kinectron.WRISTRIGHT));
-
-    //  // Left Arm
-    //  var shoulderLeft = getPos(body.getPosition(kinectron.SHOULDERLEFT));
-    //  var elbowLeft = getPos(body.getPosition(kinectron.ELBOWLEFT));
-    //  var wristLeft = getPos(body.getPosition(kinectron.WRISTLEFT));
-
-    //  // Right Leg
-    //  var hipRight = getPos(body.getPosition(kinectron.HIPRIGHT));
-    //  var kneeRight = getPos(body.getPosition(kinectron.KNEERIGHT));
-    //  var ankleRight = getPos(body.getPosition(kinectron.ANKLERIGHT));
-    //  var footRight = getPos(body.getPosition(kinectron.FOOTRIGHT));
-
-    //  // Left Leg
-    //  var hipLeft = getPos(body.getPosition(kinectron.HIPLEFT));
-    //  var kneeLeft = getPos(body.getPosition(kinectron.KNEELEFT));
-    //  var ankleLeft = getPos(body.getPosition(kinectron.ANKLELEFT));
-    //  var footLeft = getPos(body.getPosition(kinectron.FOOTLEFT));
-
-    //  noFill();
-    //  stroke(50,160,220);
-    //  strokeWeight(1);
-
-    //  // Draw Bust
-    //  beginShape();
-    //  vertex(head.x, head.y);
-    //  vertex(neck.x, neck.y);
-    //  vertex(spineShoulder.x, spineShoulder.y);
-    //  vertex(spineMid.x, spineMid.y);
-    //  vertex(spineBase.x, spineBase.y);
-    //  endShape();
-
-    //   // Draw shoulders
-    //  line(spineShoulder.x, spineShoulder.y, shoulderRight.x, shoulderRight.y);
-    //  line(spineShoulder.x, spineShoulder.y, shoulderLeft.x, shoulderLeft.y);
-
-    // // Draw Right Arm
-    //  beginShape();
-    //  vertex(shoulderRight.x, shoulderRight.y);
-    //  vertex(elbowRight.x, elbowRight.y);
-    //  vertex(wristRight.x, wristRight.y);
-    //  endShape();
-
-    //  // Draw Left Arm
-    //  beginShape();
-    //  vertex(shoulderLeft.x, shoulderLeft.y);
-    //  vertex(elbowLeft.x, elbowLeft.y);
-    //  vertex(wristLeft.x, wristLeft.y);
-    //  endShape();
-
-    //  // Draw hips
-    //  line(spineBase.x, spineBase.y, hipRight.x, hipRight.y);
-    //  line(spineBase.x, spineBase.y, hipLeft.x, hipLeft.y);
-
-    //  // Draw Right Leg
-    //  beginShape();
-    //  vertex(hipRight.x, hipRight.y);
-    //  vertex(kneeRight.x, kneeRight.y);
-    //  vertex(ankleRight.x, ankleRight.y);
-    //  vertex(footRight.x, footRight.y);
-    //  endShape();
-
-    //  // Draw Left Leg
-    //  beginShape();
-    //  vertex(hipLeft.x, hipLeft.y);
-    //  vertex(kneeLeft.x, kneeLeft.y);
-    //  vertex(ankleLeft.x, ankleLeft.y);
-    //  vertex(footLeft.x, footLeft.y);
-    //  endShape();
 }
-
-
-
-
 
 // Scale the data to fit the screen
 // Move it to the center of the screen
 // Return it as a vector
-
-
-
-
-function keyPressed() {
-    fill(255);
-    noStroke();
-    rect(0, 0, windowWidth, windowHeight);
+function getPos(joint) {
+    return createVector((joint.x * xscl) + xshift, (joint.y * yscl) + yshift);
 }
