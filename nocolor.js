@@ -5,7 +5,7 @@ Accumulation of Movement
 
 console.log("sketch started");
 
-var mode = 3;
+var mode = 2;
 var speed = 1;
 var connect = false;
 var actionline = true;
@@ -56,9 +56,9 @@ function setup() {
     kinectron.makeConnection();
 
     // Set individual frame callbacks
-    kinectron.setColorCallback(rgbCallback);
+    //kinectron.setColorCallback(rgbCallback);
     kinectron.setBodiesCallback(bodyCallback);
-    kinectron.startMultiFrame(["color", "body"]);
+    kinectron.startMultiFrame(["body"]);
 
 
     // Create video
@@ -116,23 +116,23 @@ function draw() {
     text("xscale: " + xscl, 20, 120);
     text("yscale: " + yscl, 20, 140);
 
-    if (mode != 2) {
-        var bodies = bm.getBodies();
-        for (var b = 0; b < bodies.length; b++) {
-            var body = bodies[b];
+    // if (mode != 2) {
+    //     var bodies = bm.getBodies();
+    //     for (var b = 0; b < bodies.length; b++) {
+    //         var body = bodies[b];
 
-            // save points to past-position array
-            for (var j = 0; j < body.joints.length; j++) {
+    //         // save points to past-position array
+    //         for (var j = 0; j < body.joints.length; j++) {
 
-                var oldJoints = oldSkeleton[j];
-                oldJoints.push(getPos(body.getPosition(j)));
+    //             var oldJoints = oldSkeleton[j];
+    //             oldJoints.push(getPos(body.getPosition(j)));
 
-                if (oldJoints.length > oldJointsNum) {
-                    oldJoints.shift();
-                }
-            }
-        }
-    }
+    //             if (oldJoints.length > oldJointsNum) {
+    //                 oldJoints.shift();
+    //             }
+    //         }
+    //     }
+    // }
 
 
     switch (mode) {
@@ -156,10 +156,7 @@ function draw() {
             }
 
             break;
-        case (2): // KINECT IMAGE
-
-            break;
-        case (3): // MJ VIDEO
+        case (2): // MJ
             if (!playing) {
                 var vidHeight = windowWidth / 654 * 480;
                 thrillerVid.style("visibility", "visible");
@@ -460,14 +457,14 @@ function keyPressed() {
             noStroke();
             rect(0, 0, windowWidth, windowHeight);
 
-            if (mode < 3) {
+            if (mode < 2) {
                 mode++;
             } else {
                 mode = 0;
             }
 
             // pause and hide video
-            if (mode != 3 && playing != false) {
+            if (mode != 2 && playing != false) {
                 playing = false;
                 thrillerVid.style("visibility", "hidden");
                 thrillerVid.pause();
@@ -485,7 +482,6 @@ function keyPressed() {
         case 65:
             actionline = !actionline;
             break;
-
         case 84: // t
             scvar += 0.1;
             xscl = (width / 2) * scvar;
