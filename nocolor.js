@@ -5,7 +5,7 @@ Accumulation of Movement
 
 console.log("sketch started");
 
-var mode = 2;
+var mode = 0;
 var speed = 1;
 var connect = false;
 var actionline = true;
@@ -36,9 +36,15 @@ var mjxscl, mjyscl;
 var mjxshift, mjyshift;
 var mjscl = true;
 
+// variable to track frame number of MJ dance
+var fr = 0;
+var accumfr = 0;
+
 // variables for saving
 var oldSkeleton = [];
+var curOldJoint = 0;
 var oldJointsNum = 88;
+
 
 var thrillerVid;
 var playing = false;
@@ -47,6 +53,8 @@ function setup() {
     createCanvas(windowWidth, windowHeight);
 
     console.log(IP);
+
+    frameRate(30);
 
     // KINECTRON SETUP
     // Define and create an instance of kinectron
@@ -68,7 +76,6 @@ function setup() {
     scvar = 0.9;
     scvar = 0.9;
 
-
     xscl = (width / 2) * scvar;
     yscl = -(width / 2) * scvar;
     xshift = width / 2;
@@ -82,7 +89,7 @@ function setup() {
     background(255);
 
     // populate 2D array
-    for (var i = 0; i < 26; i++) {
+    for (var i = 0; i < 25; i++) {
         oldSkeleton[i] = [];
     }
 }
@@ -94,6 +101,8 @@ function bodyCallback(body) {
             bodyTracked(body[i]);
         }
     }
+
+
 }
 
 function bodyTracked(body) {
@@ -116,32 +125,49 @@ function draw() {
     text("xscale: " + xscl, 20, 120);
     text("yscale: " + yscl, 20, 140);
 
-    // if (mode != 2) {
-    //     var bodies = bm.getBodies();
-    //     for (var b = 0; b < bodies.length; b++) {
-    //         var body = bodies[b];
+    if (mode == 0) {
+        var bodies = bm.getBodies();
+        for (var b = 0; b < bodies.length; b++) {
+            var body = bodies[b];
 
-    //         // save points to past-position array
-    //         for (var j = 0; j < body.joints.length; j++) {
+            // save points to past-position array
+            for (var j = 0; j < body.joints.length; j++) {
 
-    //             var oldJoints = oldSkeleton[j];
-    //             oldJoints.push(getPos(body.getPosition(j)));
+                var oldJoints = oldSkeleton[j];
 
-    //             if (oldJoints.length > oldJointsNum) {
-    //                 oldJoints.shift();
-    //             }
-    //         }
-    //     }
-    // }
+                oldJoints.push(getPos(body.getPosition(j)));
+
+                // if (oldJoints.length < 86) {
+                //     oldJoints.push(getPos(body.getPosition(j)));
+                // } else {
+
+                //     var curPos = getPos(body.getPosition(j));
+                //     var lastPos = oldJoints[oldJoints.length-1];
+                //     var d = dist(curPos.x, curPos.y, lastPos.x, lastPos.y);
+                //     if (d > 1) {
+                //         oldJoints.push(getPos(body.getPosition(j)));
+                //     }
+                    
+                // }
+
+                
+
+                if (oldJoints.length > oldJointsNum) {
+                    oldJoints.shift();
+                }
+            }
+        }
+    }
 
 
     switch (mode) {
         case (0): // ACCUMULATION
             // allow background to build up
-            background(255, 5);
+            background(0, 255, 188, 5);
+
             // draw mj oldSkeleton
-            drawThriller();
-            drawSkeleton();
+            drawAccumThriller();
+            drawAccumSkeleton();
             break;
         case (1): // LIVE INSTRUCTION
             background(255, 120);
@@ -342,9 +368,96 @@ function drawSkeleton() {
 
 }
 
+function drawAccumSkeleton() {
 
-// variable to track frame number of MJ dance
-var fr = 0;
+    var divider = 10;
+    stroke(255);
+
+    var head = oldSkeleton[3];
+    var wrist = oldSkeleton[6];
+    var ankle = oldSkeleton[18];
+
+    for (var i = 0; i < oldSkeleton[10].length - 3; i++) {
+        noFill();
+        
+        var d = dist(head[i].x, head[i].y, head[i + 1].x, head[i + 1].y);
+        strokeWeight(divider / d + 1);
+        line(head[i].x, head[i].y, head[i + 1].x, head[i + 1].y);
+
+        var d = dist(wrist[i].x, wrist[i].y, wrist[i + 1].x, wrist[i + 1].y);
+        strokeWeight(divider / d + 1);
+        line(wrist[i].x, wrist[i].y, wrist[i + 1].x, wrist[i + 1].y);
+
+        var d = dist(ankle[i].x, ankle[i].y, ankle[i + 1].x, ankle[i + 1].y);
+        strokeWeight(divider / d + 1);        
+        line(ankle[i].x, ankle[i].y, ankle[i + 1].x, ankle[i + 1].y);
+    }
+}
+
+
+function drawAccumThriller() {
+
+    var ankLeft = getMJpos(thriller.ankleleft[accumfr]);
+    var ankRight = getMJpos(thriller.ankleright[accumfr]);
+    var kneeLeft = getMJpos(thriller.kneeleft[accumfr]);
+    var kneeRight = getMJpos(thriller.kneeright[accumfr]);
+    var hipLeft = getMJpos(thriller.hipleft[accumfr]);
+    var hipRight = getMJpos(thriller.hipright[accumfr]);
+    var baseSpine = getMJpos(thriller.basespine[accumfr]);
+    var midSpine = getMJpos(thriller.midspine[accumfr]);
+    var neck = getMJpos(thriller.neck[accumfr]);
+    var head = getMJpos(thriller.head[accumfr]);
+    var shoulderLeft = getMJpos(thriller.shoulderleft[accumfr]);
+    var shoulderRight = getMJpos(thriller.shoulderright[accumfr]);
+    var elbowLeft = getMJpos(thriller.elbowleft[accumfr]);
+    var elbowRight = getMJpos(thriller.elbowright[accumfr]);
+    var wristLeft = getMJpos(thriller.wristleft[accumfr]);
+    var wristRight = getMJpos(thriller.wristright[accumfr]);
+
+    noFill();
+    stroke(200, 0, 255);
+    var divider = 10;
+
+    var ankLeft = getMJpos(thriller.ankleleft[accumfr]);
+    var ankLeftNext = getMJpos(thriller.ankleleft[accumfr + 1]);
+    var ankDist = dist(ankLeft.x, ankLeft.y, ankLeftNext.x, ankLeftNext.y);
+    strokeWeight(divider / ankDist + 1);
+
+    line(ankLeft.x, ankLeft.y, ankLeftNext.x, ankLeftNext.y);
+
+    var kneeRight = getMJpos(thriller.kneeright[accumfr]);
+    var kneeRightNext = getMJpos(thriller.kneeright[accumfr + 1]);
+    var kneeDist = dist(kneeRight.x, kneeRight.y, kneeRightNext.x, kneeRightNext.y);
+    strokeWeight(divider / kneeDist + 1);
+
+    line(kneeRight.x, kneeRight.y, kneeRightNext.x, kneeRightNext.y);
+
+    var wristRight = getMJpos(thriller.wristright[accumfr]);
+    var wristRightNext = getMJpos(thriller.wristright[accumfr + 1]);
+    var wristDist = dist(wristRight.x, wristRight.y, wristRightNext.x, wristRightNext.y);
+    strokeWeight(divider / wristDist + 1);
+
+    line(wristRight.x, wristRight.y, wristRightNext.x, wristRightNext.y);
+
+    var head = getMJpos(thriller.head[accumfr]);
+    var headNext = getMJpos(thriller.head[accumfr + 1]);
+    var headDist = dist(head.x, head.y, headNext.x, headNext.y);
+    strokeWeight(divider / headDist + 1);
+
+    line(head.x, head.y, headNext.x, headNext.y);
+
+
+    // increment through the frames
+    if (accumfr < 87) {
+        accumfr++;
+    } else {
+        accumfr = 0;
+
+    }
+}
+
+
+
 
 function drawThriller() {
 
@@ -489,8 +602,8 @@ function keyPressed() {
             break;
         case 71: // g
             scvar -= 0.1;
-            xscl = (width / 2) * scvar;
-            yscl = -(width / 2) * scvar;
+            xscl = round((width / 2) * scvar);
+            yscl = round(-(width / 2) * scvar);
             break;
         case 89: // y 
             yshift += 50;
@@ -500,10 +613,10 @@ function keyPressed() {
             break;
         case 82: // r
             mjyshift += 50;
-            break; 
+            break;
         case 70: // f
             mjyshift -= 50;
-            break; 
+            break;
 
     }
 
