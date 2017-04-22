@@ -13,9 +13,7 @@ var actionline = true;
 // Declare kinectron
 var kinectron = null;
 
-var kinectron2 = null;
-
-var IP = "172.16.226.135";
+var IP = "172.16.223.185";
 
 // Managing kinect bodies
 var bm = new BodyManager();
@@ -64,9 +62,9 @@ function setup() {
     kinectron.makeConnection();
 
     // Set individual frame callbacks
-    //kinectron.setColorCallback(rgbCallback);
+    kinectron.setColorCallback(rgbCallback);
     kinectron.setBodiesCallback(bodyCallback);
-    kinectron.startMultiFrame(["body"]);
+    kinectron.startMultiFrame(["body", "color"]);
 
 
     // Create video
@@ -101,8 +99,17 @@ function bodyCallback(body) {
             bodyTracked(body[i]);
         }
     }
+}
 
 
+function rgbCallback(img) {
+    if (mode == 3) {
+        var mapheight = 540 / 960 * windowWidth;
+
+        loadImage(img.src, function(loadedImage) {
+            image(loadedImage, 0, 0, windowWidth, mapheight);
+        });
+    }
 }
 
 function bodyTracked(body) {
@@ -180,7 +187,6 @@ function draw() {
             if (connect) {
                 drawConnections();
             }
-
             break;
         case (2): // MJ
             if (!playing) {
@@ -194,18 +200,12 @@ function draw() {
                 playing = true;
             }
             break;
+        case (3):
+            // the body will draw
+            break;
     }
 }
 
-function rgbCallback(img) {
-    if (mode == 2) {
-        var mapheight = 540 / 960 * windowWidth;
-
-        loadImage(img.src, function(loadedImage) {
-            image(loadedImage, 0, 0, windowWidth, mapheight);
-        });
-    }
-}
 
 function drawAction() {
 
@@ -570,7 +570,7 @@ function keyPressed() {
             noStroke();
             rect(0, 0, windowWidth, windowHeight);
 
-            if (mode < 2) {
+            if (mode < 3) {
                 mode++;
             } else {
                 mode = 0;

@@ -5,17 +5,26 @@ Accumulation of Movement
 
 console.log("sketch started");
 
-var mode = 3;
+var mode = 0;
 var speed = 1;
-var connect = false;
+var connect = true;
 var actionline = true;
+
+
+// manage the flickering
+var exposed = false;
+var screenMode = 1;
+var performTimePass = 5*30;
+var lastPerformTime = 0;
+var audienceTimePass = 2*30; 
+var lastAudienceTime = 0;
 
 // Declare kinectron
 var kinectron = null;
+var audience = null;
 
-var kinectron2 = null;
-
-var IP = "172.16.226.135";
+var IP = "172.16.223.185";
+var IPaudience = "";
 
 // Managing kinect bodies
 var bm = new BodyManager();
@@ -36,9 +45,15 @@ var mjxscl, mjyscl;
 var mjxshift, mjyshift;
 var mjscl = true;
 
+// variable to track frame number of MJ dance
+var fr = 0;
+var accumfr = 0;
+
 // variables for saving
 var oldSkeleton = [];
+var curOldJoint = 0;
 var oldJointsNum = 88;
+
 
 var thrillerVid;
 var playing = false;
@@ -48,18 +63,24 @@ function setup() {
 
     console.log(IP);
 
+    frameRate(30);
+
     // KINECTRON SETUP
     // Define and create an instance of kinectron
     kinectron = new Kinectron(IP);
+    audience = new Kinectron(IPaudience);
 
     // Connect with application over peer
     kinectron.makeConnection();
+    audience.makeConnection();
 
-    // Set individual frame callbacks
-    kinectron.setColorCallback(rgbCallback);
+    // Set individual frame callbacks for KINECT 1
+    kinectron.setColorCallback(performCallback);
     kinectron.setBodiesCallback(bodyCallback);
-    kinectron.startMultiFrame(["color", "body"]);
+    kinectron.startMultiFrame(["body", "color"]);
 
+    audience.setColorCallback(audienceCallback);
+    audience.startMultiFrame(["color"]);
 
     // Create video
     thrillerVid = createVideo('thriller.mp4');
@@ -67,7 +88,6 @@ function setup() {
 
     scvar = 0.9;
     scvar = 0.9;
-
 
     xscl = (width / 2) * scvar;
     yscl = -(width / 2) * scvar;
@@ -82,7 +102,7 @@ function setup() {
     background(255);
 
     // populate 2D array
-    for (var i = 0; i < 26; i++) {
+    for (var i = 0; i < 25; i++) {
         oldSkeleton[i] = [];
     }
 }
@@ -93,6 +113,27 @@ function bodyCallback(body) {
         if (body[i].tracked === true) {
             bodyTracked(body[i]);
         }
+    }
+}
+
+
+function performCallback(img) {
+    if (mode == 3) {
+        var mapheight = 540 / 960 * windowWidth;
+
+        loadImage(img.src, function(loadedImage) {
+            image(loadedImage, 0, 0, windowWidth, mapheight);
+        });
+    }
+}
+
+function audienceCallback(img) {
+    if (mode == 4) {
+        var mapheight = 540 / 960 * windowWidth;
+
+        loadImage(img.src, function(loadedImage) {
+            image(loadedImage, 0, 0, windowWidth, mapheight);
+        });
     }
 }
 
@@ -109,14 +150,18 @@ function draw() {
     textSize(12);
     fill(0);
     noStroke();
-    text("mode: " + mode, 20, 20);
-    text("speed: " + speed, 20, 40);
-    text("connect: " + connect, 20, 60);
-    text("yshift: " + yshift, 20, 100);
-    text("xscale: " + xscl, 20, 120);
-    text("yscale: " + yscl, 20, 140);
+    text("screen: " + screenMode, 20, 20);
+    text("mode: " + mode, 20, 50);
+    text("speed: " + speed, 20, 70);
+    text("connect: " + connect, 20, 90);
+    text("yshift: " + yshift, 20, 120);
+    text("xscale: " + xscl, 20, 140);
+    text("yscale: " + yscl, 20, 160);
 
-    if (mode != 2) {
+    text("audienceTime: " + lastAudienceTime, 100, 20);
+    text("performTime: " + lastPerformTime, 100, 40);
+
+    if (mode == 0) {
         var bodies = bm.getBodies();
         for (var b = 0; b < bodies.length; b++) {
             var body = bodies[b];
@@ -125,6 +170,7 @@ function draw() {
             for (var j = 0; j < body.joints.length; j++) {
 
                 var oldJoints = oldSkeleton[j];
+
                 oldJoints.push(getPos(body.getPosition(j)));
 
                 if (oldJoints.length > oldJointsNum) {
@@ -135,31 +181,82 @@ function draw() {
     }
 
 
+
+    if ( lastPerformTime > performTimePass ) {
+        // switch to exposure!
+        audience.startRGB();
+        exposed = true;
+
+        // reset counter
+        lastPerformTime = 0;
+
+        // switch screens
+        switch (screenMode) {
+            // primary performance screen
+            case (1): 
+                // switch to rgb of audience (k2)
+                // mode = 4;
+                // TEMP SWITCH TO SELFIE FEED
+                mode = 3; 
+                break;
+
+            // audience spectating screen
+            case (2): 
+                // switch to RGB performance feed (k1)
+                mode = 3; 
+                break;
+        }
+    }
+
+    if ( lastAudienceTime > audienceTimePass ) {
+        // stop the audience feed
+        audience.stopAll();
+        exposed = false;
+
+        // reset counter 
+        lastAudienceTime = 0;
+
+        // switch screens
+        switch (screenMode) {
+            // primary performance screen
+            case (1): 
+                // switch back to dancing 
+                mode = 1; 
+                break;
+
+            // audience spectating screen
+            case (2): 
+                // back to translation/accumulation
+                mode = 0; 
+                break;
+        }
+
+    }
+
+
+
     switch (mode) {
         case (0): // ACCUMULATION
             // allow background to build up
-            background(255, 5);
+            background(0, 255, 188, 5);
+
             // draw mj oldSkeleton
-            drawThriller();
-            drawSkeleton();
+            drawAccumThriller();
+            drawAccumSkeleton();
             break;
         case (1): // LIVE INSTRUCTION
             background(255, 120);
             // draw mj oldSkeleton
-            if (actionline) {
-                drawAction();
-            }
+            // if (actionline) {
+            //     drawAction();
+            // }
             drawThriller();
             drawSkeleton();
             if (connect) {
                 drawConnections();
             }
-
             break;
-        case (2): // KINECT IMAGE
-
-            break;
-        case (3): // MJ VIDEO
+        case (2): // MJ
             if (!playing) {
                 var vidHeight = windowWidth / 654 * 480;
                 thrillerVid.style("visibility", "visible");
@@ -171,18 +268,18 @@ function draw() {
                 playing = true;
             }
             break;
+        case (3):
+            // the body will draw
+            break;
+    }
+
+    if (exposed == true) {
+        lastAudienceTime++;
+    } else {
+        lastPerformTime++;
     }
 }
 
-function rgbCallback(img) {
-    if (mode == 2) {
-        var mapheight = 540 / 960 * windowWidth;
-
-        loadImage(img.src, function(loadedImage) {
-            image(loadedImage, 0, 0, windowWidth, mapheight);
-        });
-    }
-}
 
 function drawAction() {
 
@@ -272,6 +369,7 @@ function drawSkeleton() {
         var body = bodies[b];
 
         // draw POINTS for each joint
+
         for (var j = 0; j < body.joints.length; j++) {
 
             var pos = getPos(body.getPosition(j));
@@ -345,9 +443,96 @@ function drawSkeleton() {
 
 }
 
+function drawAccumSkeleton() {
 
-// variable to track frame number of MJ dance
-var fr = 0;
+    var divider = 10;
+    stroke(255);
+
+    var head = oldSkeleton[3];
+    var wrist = oldSkeleton[6];
+    var ankle = oldSkeleton[18];
+
+    for (var i = 0; i < oldSkeleton[10].length - 3; i++) {
+        noFill();
+
+        var d = dist(head[i].x, head[i].y, head[i + 1].x, head[i + 1].y);
+        strokeWeight(divider / d + 1);
+        line(head[i].x, head[i].y, head[i + 1].x, head[i + 1].y);
+
+        var d = dist(wrist[i].x, wrist[i].y, wrist[i + 1].x, wrist[i + 1].y);
+        strokeWeight(divider / d + 1);
+        line(wrist[i].x, wrist[i].y, wrist[i + 1].x, wrist[i + 1].y);
+
+        var d = dist(ankle[i].x, ankle[i].y, ankle[i + 1].x, ankle[i + 1].y);
+        strokeWeight(divider / d + 1);
+        line(ankle[i].x, ankle[i].y, ankle[i + 1].x, ankle[i + 1].y);
+    }
+}
+
+
+function drawAccumThriller() {
+
+    var ankLeft = getMJpos(thriller.ankleleft[accumfr]);
+    var ankRight = getMJpos(thriller.ankleright[accumfr]);
+    var kneeLeft = getMJpos(thriller.kneeleft[accumfr]);
+    var kneeRight = getMJpos(thriller.kneeright[accumfr]);
+    var hipLeft = getMJpos(thriller.hipleft[accumfr]);
+    var hipRight = getMJpos(thriller.hipright[accumfr]);
+    var baseSpine = getMJpos(thriller.basespine[accumfr]);
+    var midSpine = getMJpos(thriller.midspine[accumfr]);
+    var neck = getMJpos(thriller.neck[accumfr]);
+    var head = getMJpos(thriller.head[accumfr]);
+    var shoulderLeft = getMJpos(thriller.shoulderleft[accumfr]);
+    var shoulderRight = getMJpos(thriller.shoulderright[accumfr]);
+    var elbowLeft = getMJpos(thriller.elbowleft[accumfr]);
+    var elbowRight = getMJpos(thriller.elbowright[accumfr]);
+    var wristLeft = getMJpos(thriller.wristleft[accumfr]);
+    var wristRight = getMJpos(thriller.wristright[accumfr]);
+
+    noFill();
+    stroke(200, 0, 255);
+    var divider = 10;
+
+    var ankLeft = getMJpos(thriller.ankleleft[accumfr]);
+    var ankLeftNext = getMJpos(thriller.ankleleft[accumfr + 1]);
+    var ankDist = dist(ankLeft.x, ankLeft.y, ankLeftNext.x, ankLeftNext.y);
+    strokeWeight(divider / ankDist + 1);
+
+    line(ankLeft.x, ankLeft.y, ankLeftNext.x, ankLeftNext.y);
+
+    var kneeRight = getMJpos(thriller.kneeright[accumfr]);
+    var kneeRightNext = getMJpos(thriller.kneeright[accumfr + 1]);
+    var kneeDist = dist(kneeRight.x, kneeRight.y, kneeRightNext.x, kneeRightNext.y);
+    strokeWeight(divider / kneeDist + 1);
+
+    line(kneeRight.x, kneeRight.y, kneeRightNext.x, kneeRightNext.y);
+
+    var wristRight = getMJpos(thriller.wristright[accumfr]);
+    var wristRightNext = getMJpos(thriller.wristright[accumfr + 1]);
+    var wristDist = dist(wristRight.x, wristRight.y, wristRightNext.x, wristRightNext.y);
+    strokeWeight(divider / wristDist + 1);
+
+    line(wristRight.x, wristRight.y, wristRightNext.x, wristRightNext.y);
+
+    var head = getMJpos(thriller.head[accumfr]);
+    var headNext = getMJpos(thriller.head[accumfr + 1]);
+    var headDist = dist(head.x, head.y, headNext.x, headNext.y);
+    strokeWeight(divider / headDist + 1);
+
+    line(head.x, head.y, headNext.x, headNext.y);
+
+
+    // increment through the frames
+    if (accumfr < 87) {
+        accumfr++;
+    } else {
+        accumfr = 0;
+
+    }
+}
+
+
+
 
 function drawThriller() {
 
@@ -467,12 +652,13 @@ function keyPressed() {
             }
 
             // pause and hide video
-            if (mode != 3 && playing != false) {
+            if (mode != 2 && playing != false) {
                 playing = false;
                 thrillerVid.style("visibility", "hidden");
                 thrillerVid.pause();
             }
             break;
+
         case UP_ARROW:
             speed += 1;
             break;
@@ -485,7 +671,6 @@ function keyPressed() {
         case 65:
             actionline = !actionline;
             break;
-
         case 84: // t
             scvar += 0.1;
             xscl = (width / 2) * scvar;
@@ -493,8 +678,8 @@ function keyPressed() {
             break;
         case 71: // g
             scvar -= 0.1;
-            xscl = (width / 2) * scvar;
-            yscl = -(width / 2) * scvar;
+            xscl = round((width / 2) * scvar);
+            yscl = round(-(width / 2) * scvar);
             break;
         case 89: // y 
             yshift += 50;
@@ -504,11 +689,19 @@ function keyPressed() {
             break;
         case 82: // r
             mjyshift += 50;
-            break; 
+            break;
         case 70: // f
             mjyshift -= 50;
-            break; 
+            break;
 
+            // control screen mode for flickering rules
+        case 81: // q
+            if (screenMode < 4) {
+                screenMode++;
+            } else {
+                screenMode = 1;
+            }
+            break;
     }
 
 }
