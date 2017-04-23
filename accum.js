@@ -16,14 +16,12 @@ var attempts = 0;
 var maxLoop = 8;
 var maxAttempts = maxLoop * 90;
 
-var exposed = false;
-var exposedTime = 0;
-var maxExposure = 30 * 6;
-
 // manage the flickering
 var screenMode = 1;
 // 1 = performer
 // 2 = audience
+
+var exposed = false;
 
 // Declare kinectron
 var kinectron = null;
@@ -225,6 +223,19 @@ function draw() {
                 // so you have 5 chances
                 if (attempts < maxAttempts) {
                     attempts++;
+
+                    // update the server
+                    $.ajax({
+                        url: "http://sk6385.itp.io:1234/okay",
+                        dataType: 'json',
+                        success: function(data) {
+                            // do nothing
+                            console.log(data);
+                        },
+                        error: function() {
+                            alert("error");
+                        },
+                    });
                 } else {
                     if (correctJoints < 4) {
                         console.log("try a new joint");
@@ -236,6 +247,19 @@ function draw() {
                         // reset attempts
                         attempts = 0;
                         correctJoints = 0;
+
+                        // tell the server we're exposing the body
+                        $.ajax({
+                            url: "http://sk6385.itp.io:1234/expose",
+                            dataType: 'json',
+                            success: function(data) {
+                                // do nothing
+                                console.log(data);
+                            },
+                            error: function() {
+                                alert("error");
+                            },
+                        });
 
                         // expose the performer and audience
                         exposed = !exposed;
@@ -300,7 +324,7 @@ function draw() {
         text("screen (s): " + screenMode, 20, 20);
         text("mode (>): " + mode, 20, 40);
         text("connect: " + connect, 20, 70);
-        text("attempt: " + floor(attempts/90), 20, 90)
+        text("attempt: " + floor(attempts / 90), 20, 90)
         text("yshift (y/h): " + round(yshift), 20, 120);
         text("xscale (t/g): " + round(xscl), 20, 140);
         text("yscale: (t/g)" + round(yscl), 20, 160);
@@ -402,7 +426,7 @@ function accumulateSkel(i, opac) {
     var opacVal = ((i + 1) / oldJointsNum) * opac;
     var color = skelAction + opacVal + ')';
     stroke(color);
-    
+
 
     var head = oldSkeleton[3];
     var wristleft = oldSkeleton[6];
@@ -733,8 +757,26 @@ function keyPressed() {
         case 68: // d
             debug = !debug;
             break;
+
+        case 90: // z
+            checkCounter();
+            break;
     }
 
+}
+
+function checkCounter() {
+    $.ajax({
+        url: "http://sk6385.itp.io:1234/checkCounter",
+        dataType: 'json',
+        success: function(data) {
+
+            console.log(data);
+        },
+        error: function() {
+            alert("error");
+        },
+    });
 }
 
 // Scale the data to fit the screen
