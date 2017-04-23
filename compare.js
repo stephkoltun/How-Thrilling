@@ -27,7 +27,7 @@ function compareJoint(skeljoint, mjjoint) {
     var compareY = abs(avgMjY - avgSkelY);
 
     if ((compareX < correctThreshold) &&  (compareY < correctThreshold)) {
-        if (correctJoints < 5) {
+        if (correctJoints < 4) {
             correctJoints++;
             attempts = 0;
         } else {
