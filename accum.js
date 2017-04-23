@@ -5,36 +5,42 @@ Accumulation of Movement
 
 console.log("sketch started");
 
+var debug = true;
+
 var mode = 1;
 var speed = 1;
 var connect = false;
-var actionline = false;
 
+var correctJoints = 0;
+var attempts = 0;
+var maxLoop = 8;
+var maxAttempts = maxLoop * 90;
+
+var exposed = false;
+var exposedTime = 0;
+var maxExposure = 30 * 6;
 
 // manage the flickering
-var exposed = false;
 var screenMode = 1;
-var performTimePass = 5*30;
-var lastPerformTime = 0;
-var audienceTimePass = 2*30; 
-var lastAudienceTime = 0;
+// 1 = performer
+// 2 = audience
 
 // Declare kinectron
 var kinectron = null;
 var audience = null;
 
-var IP = "192.168.1.8";
+var IP = "172.16.226.69";
 var IPaudience = "";
 
 // Managing kinect bodies
 var bm = new BodyManager();
-var DEATH_TH = 1000;
+var DEATH_TH = 500;
 
-var skelColor = "rgba(255,0,230,.5)";
-var mjColor = "rgba(24,210,255,.8)";
-var mjAction = "rgba(17,161,213,";
-var mjDark = "rgba(40,185,225,1)";
-var boneWeight = 12;
+var skelColor = "rgba(137,35,253,1)";
+var skelAction = "rgba(217,124,238,"
+var mjColor = "rgba(24,210,255,1)";
+var mjAction = "rgba(140,207,203,";
+var boneWeight = 10;
 
 // Mapping Kinect data to projecion
 var scvar, xscl, yscl;
@@ -52,9 +58,8 @@ var accumfr = 1;
 
 // variables for saving
 var oldSkeleton = [];
-var curOldJoint = 0;
-var oldJointsNum = 88;
-
+var oldJointsNum = 80;
+var allOldSkels = [];
 
 var thrillerVid;
 var playing = false;
@@ -85,13 +90,13 @@ function setup() {
     thrillerVid = createVideo('thriller.mp4');
     thrillerVid.style("visibility", "hidden");
 
-    scvar = 0.9;
-    scvar = 0.9;
+    scvar = 0.78;
+    scvar = 0.78;
 
     xscl = (width / 2) * scvar;
     yscl = -(width / 2) * scvar;
     xshift = width / 2;
-    yshift = height / 2;
+    yshift = height / 2 - 80;
 
     mjxscl = 1.45;
     mjyscl = 1.45;
@@ -117,8 +122,11 @@ function bodyCallback(body) {
 
 
 function performCallback(img) {
-    if (mode == 3) {
-        var mapheight = 540 / 960 * windowWidth;
+    if (mode == 3 || mode == 4) {
+        var mapheight = (540 / 960) * windowWidth;
+        fill(0);
+        noStroke(0);
+        rect(0, 0, windowWidth, windowHeight);
 
         loadImage(img.src, function(loadedImage) {
             image(loadedImage, 0, 0, windowWidth, mapheight);
@@ -128,7 +136,10 @@ function performCallback(img) {
 
 function audienceCallback(img) {
     if (mode == 4) {
-        var mapheight = 540 / 960 * windowWidth;
+        var mapheight = (540 / 960) * windowWidth;
+        fill(0);
+        noStroke(0);
+        rect(0, 0, windowWidth, windowHeight);
 
         loadImage(img.src, function(loadedImage) {
             image(loadedImage, 0, 0, windowWidth, mapheight);
@@ -144,23 +155,11 @@ function bodyTracked(body) {
     else bm.update(body);
 }
 
+
+
 function draw() {
-
-    textSize(12);
-    fill(255);
-    noStroke();
-    text("screen: " + screenMode, 20, 20);
-    text("mode: " + mode, 20, 50);
-    text("speed: " + speed, 20, 70);
-    text("connect: " + connect, 20, 90);
-    text("yshift: " + yshift, 20, 120);
-    text("xscale: " + xscl, 20, 140);
-    text("yscale: " + yscl, 20, 160);
-
-    text("audienceTime: " + lastAudienceTime, 100, 20);
-    text("performTime: " + lastPerformTime, 100, 40);
-
-    if (mode == 0) {
+    // save the old skeletons
+    if (mode == 0 || mode == 1) {
         var bodies = bm.getBodies();
         for (var b = 0; b < bodies.length; b++) {
             var body = bodies[b];
@@ -169,7 +168,6 @@ function draw() {
             for (var j = 0; j < body.joints.length; j++) {
 
                 var oldJoints = oldSkeleton[j];
-
                 oldJoints.push(getPos(body.getPosition(j)));
 
                 if (oldJoints.length > oldJointsNum) {
@@ -179,27 +177,84 @@ function draw() {
         }
     }
 
+    // manage the different screens
 
     switch (mode) {
-        case (0): // ACCUMULATION
-            // allow background to build up
-            background(0, 255, 188, 5);
-
-            // draw mj oldSkeleton
+        case (0): // no skeletons
+            background(0);
+            //draw mj oldSkeleton
             drawAccumThriller();
-            drawAccumSkeleton();
+            if (oldSkeleton[0].length == oldJointsNum) {
+                drawAccumSkeleton();
+            }
             break;
+
         case (1): // LIVE INSTRUCTION
             background(0);
             //draw mj oldSkeleton
-            if (actionline) {
-                drawAction();
-            }
             drawAccumThriller();
             drawThriller();
-            // draw mj oldSkeleton
-            
+            // draw tracked body
+            if (oldSkeleton[0].length == oldJointsNum) {
+                drawAccumSkeleton();
+
+                // compare joints
+                if (frameCount % 30 == 0) {
+                    switch (correctJoints) {
+                        case (0):
+                            compareJoint(oldSkeleton[kinectron.ANKLERIGHT], thriller.ankleleft);
+                            break;
+                        case (1):
+                            compareJoint(oldSkeleton[kinectron.ANKLELEFT], thriller.ankleright);
+                            break;
+                        case (2):
+                            compareJoint(oldSkeleton[kinectron.WRISTRIGHT], thriller.wristleft);
+                            break;
+                        case (3):
+                            compareJoint(oldSkeleton[kinectron.WRISTLEFT], thriller.wristright);
+                        case (4):
+                            compareJoint(oldSkeleton[kinectron.HEAD], thriller.head);
+                            break;
+                    }
+                }
+            };
+
+            if (bm.getBodies().length > 0) {
+                // MONITOR ATTEMPTS
+                // 450 = 90 (num of frames in mj move) * 5
+                // so you have 5 chances
+                if (attempts < maxAttempts) {
+                    attempts++;
+                } else {
+                    if (correctJoints < 4) {
+                        console.log("try a new joint");
+                        // give them a new joint to try
+                        correctJoints++;
+                        attempts = 0;
+                    } else {
+                        console.log("you tried enough!");
+                        // reset attempts
+                        attempts = 0;
+                        correctJoints = 0;
+
+                        // expose the performer and audience
+                        exposed = !exposed;
+                        if (screenMode == 1) {
+                            console.log("say hello to your audience");
+                            // switch to audience camera
+                            mode = 4;
+                        }
+                        if (screenMode == 2) {
+                            console.log("say hello to the performer");
+                            // switch to selfie camera
+                            mode = 3;
+                        }
+                    }
+                }
+            }
+
             drawSkeleton();
+
             if (connect) {
                 drawConnections();
             }
@@ -216,143 +271,65 @@ function draw() {
                 playing = true;
             }
             break;
-    }
-}
-
-
-function drawAction() {
-
-    stroke(255,200);
-    strokeWeight(1);
-    noFill();
-
-    for (var i = 0; i < 88; i++) {
-        var ankLeft = getMJpos(thriller.ankleleft[i]);
-        var ankLeftNext = getMJpos(thriller.ankleleft[i + 1]);
-        line(ankLeft.x, ankLeft.y, ankLeftNext.x, ankLeftNext.y);
-
-        var ankRight = getMJpos(thriller.ankleright[i]);
-        var ankRightNext = getMJpos(thriller.ankleright[i + 1]);
-        line(ankRight.x, ankRight.y, ankRightNext.x, ankRightNext.y);
-
-        var wristRight = getMJpos(thriller.wristright[i]);
-        var wristRightNext = getMJpos(thriller.wristright[i + 1]);
-        line(wristRight.x, wristRight.y, wristRightNext.x, wristRightNext.y);
-
-        var wristLeft = getMJpos(thriller.wristleft[i]);
-        var wristLeftNext = getMJpos(thriller.wristleft[i + 1]);
-        line(wristLeft.x, wristLeft.y, wristLeftNext.x, wristLeftNext.y);
-
-        var head = getMJpos(thriller.head[i]);
-        var headNext = getMJpos(thriller.head[i + 1]);
-        line(head.x, head.y, headNext.x, headNext.y);
-    }
-
-}
-
-function drawConnections() {
-
-    // MJ's points
-    var ankLeft = getMJpos(thriller.ankleleft[fr]);
-    var ankRight = getMJpos(thriller.ankleright[fr]);
-    var kneeLeft = getMJpos(thriller.kneeleft[fr]);
-    var kneeRight = getMJpos(thriller.kneeright[fr]);
-    var hipLeft = getMJpos(thriller.hipleft[fr]);
-    var hipRight = getMJpos(thriller.hipright[fr]);
-    var baseSpine = getMJpos(thriller.basespine[fr]);
-    var midSpine = getMJpos(thriller.midspine[fr]);
-    var neck = getMJpos(thriller.neck[fr]);
-    var head = getMJpos(thriller.head[fr]);
-    var shoulderLeft = getMJpos(thriller.shoulderleft[fr]);
-    var shoulderRight = getMJpos(thriller.shoulderright[fr]);
-    var elbowLeft = getMJpos(thriller.elbowleft[fr]);
-    var elbowRight = getMJpos(thriller.elbowright[fr]);
-    var wristLeft = getMJpos(thriller.wristleft[fr]);
-    var wristRight = getMJpos(thriller.wristright[fr]);
-
-
-    var bodies = bm.getBodies();
-    for (var b = 0; b < bodies.length; b++) {
-        var body = bodies[b];
-
-
-        noFill();
-        stroke(40,70,170);
-        strokeWeight(2);
-
-        // draw POINTS for each joint
-        for (var j = 0; j < body.joints.length; j++) {
-            var pos = getPos(body.getPosition(j));
-
-            switch (j) {
-                case 3: // head
-                    line(pos.x, pos.y, head.x, head.y);
-                    break;
-                case 10: // right wrist
-                    line(pos.x, pos.y, wristRight.x, wristRight.y);
-                    break;
-                case 13: // right knee
-                    line(pos.x, pos.y, kneeRight.x, kneeRight.y);
-                    break;
-                case 14: // left ankle
-                    line(pos.x, pos.y, ankLeft.x, ankLeft.y);
-                    break;
-
+        case (3): // selfie
+            // keep track of timing
+            if (exposedTime < maxExposure) {
+                exposedTime++;
+            } else {
+                exposedTime = 0;
+                // go back to observing;
+                mode = 0;
             }
-
-        }
+            break;
+        case (4): // audience
+            // keep track of timing
+            if (exposedTime < maxExposure) {
+                exposedTime++;
+            } else {
+                exposedTime = 0;
+                // go back to learning;
+                mode = 1;
+            }
+            break;
     }
 
+    if (debug) {
+        textSize(12);
+        fill(255);
+        noStroke();
+        text("screen (s): " + screenMode, 20, 20);
+        text("mode (>): " + mode, 20, 40);
+        text("connect: " + connect, 20, 70);
+        text("attempt: " + floor(attempts/90), 20, 90)
+        text("yshift (y/h): " + round(yshift), 20, 120);
+        text("xscale (t/g): " + round(xscl), 20, 140);
+        text("yscale: (t/g)" + round(yscl), 20, 160);
+
+        text("mjY (r/f): " + round(mjyshift), 150, 120);
+    }
 }
 
+/* ------ SKELETON FUNCTIONS ------- */
 
 function drawSkeleton() {
     var bodies = bm.getBodies();
     for (var b = 0; b < bodies.length; b++) {
         var body = bodies[b];
 
-        // draw POINTS for each joint
-
+        // loop through each joint
         for (var j = 0; j < body.joints.length; j++) {
 
             var pos = getPos(body.getPosition(j));
 
-            switch (mode) {
-                case (0):
-                    fill(skelColor);
-                    noStroke();
-                    var r = 5;
-                    ellipse(pos.x, pos.y, r, r);
-                    break;
-                case (1):
-                    fill(skelColor);
-                    noStroke();
-                    var r = 8;
-                    break;
-            }
-
-
-            // draw BONES
-            // and lines to MJ
             // draw LINES between joints
-            switch (mode) {
-                case (0):
-                    noFill();
-                    stroke(skelColor);
-                    strokeWeight(0.5);
-                    break;
-                case (1):
-                    noFill();
-                    stroke(skelColor);
-                    strokeWeight(boneWeight);
-                    break;
-            }
+            noFill();
+            stroke(skelColor);
+            strokeWeight(boneWeight);
+
 
             switch (j) {
                 case 2: // neck to head 
                     line(pos.x, pos.y, getPos(body.getPosition(3)).x, getPos(body.getPosition(3)).y);
-                    stroke(0);
-                    strokeWeight(5);
                     break;
                 case 4: // shoulders
                     line(pos.x, pos.y, getPos(body.getPosition(8)).x, getPos(body.getPosition(8)).y);
@@ -376,71 +353,139 @@ function drawSkeleton() {
                     line(pos.x, pos.y, getPos(body.getPosition(16)).x, getPos(body.getPosition(16)).y);
                     line(pos.x, pos.y, getPos(body.getPosition(18)).x, getPos(body.getPosition(18)).y);
                     break;
-
             }
-
         }
+
+
+        var r = 20;
+        var curpos;
+        switch (correctJoints) {
+            case (1):
+                curpos = getPos(body.getPosition(kinectron.ANKLELEFT));
+                break;
+            case (0):
+                curpos = getPos(body.getPosition(kinectron.ANKLERIGHT));
+                break;
+            case (2):
+                curpos = getPos(body.getPosition(kinectron.WRISTRIGHT));
+                break;
+            case (3):
+                curpos = getPos(body.getPosition(kinectron.WRISTLEFT));
+                break;
+            case (4):
+                curpos = getPos(body.getPosition(3));
+                break;
+        }
+        fill(skelColor);
+        noStroke();
+        ellipse(curpos.x, curpos.y, r, r);
     }
 
 }
 
 function drawAccumSkeleton() {
 
-    var divider = 10;
-    stroke(255);
-    strokeWeight(2);
+    var bodies = bm.getBodies();
 
-    var head = oldSkeleton[3];
-    var wrist = oldSkeleton[6];
-    var ankle = oldSkeleton[18];
-
-    for (var i = 0; i < oldSkeleton[10].length - 3; i++) {
+    if (bodies.length > 0) {
         noFill();
 
-        var d = dist(head[i].x, head[i].y, head[i + 1].x, head[i + 1].y);
-        //strokeWeight(divider / d + 1);
-        line(head[i].x, head[i].y, head[i + 1].x, head[i + 1].y);
+        for (var i = 1; i < oldJointsNum - 1; i++) {
 
-        var d = dist(wrist[i].x, wrist[i].y, wrist[i + 1].x, wrist[i + 1].y);
-        //strokeWeight(divider / d + 1);
-        line(wrist[i].x, wrist[i].y, wrist[i + 1].x, wrist[i + 1].y);
-
-        var d = dist(ankle[i].x, ankle[i].y, ankle[i + 1].x, ankle[i + 1].y);
-        //strokeWeight(divider / d + 1);
-        line(ankle[i].x, ankle[i].y, ankle[i + 1].x, ankle[i + 1].y);
+            accumulateSkel(i, 2);
+        }
     }
 }
 
+function accumulateSkel(i, opac) {
+
+    var opacVal = ((i + 1) / oldJointsNum) * opac;
+    var color = skelAction + opacVal + ')';
+    stroke(color);
+    
+
+    var head = oldSkeleton[3];
+    var wristleft = oldSkeleton[6];
+    var wristright = oldSkeleton[10];
+    var ankleleft = oldSkeleton[14];
+    var ankleright = oldSkeleton[18];
+
+    if (correctJoints >= 0) {
+        if (correctJoints == 0) {
+            strokeWeight(5);
+        } else {
+            strokeWeight(2);
+        }
+        line(ankleright[i].x, ankleright[i].y, ankleright[i - 1].x, ankleright[i - 1].y);
+    }
+
+    if (correctJoints >= 1) {
+        if (correctJoints == 1) {
+            strokeWeight(5);
+        } else {
+            strokeWeight(2);
+        }
+        line(ankleleft[i].x, ankleleft[i].y, ankleleft[i - 1].x, ankleleft[i - 1].y);
+    }
+
+    if (correctJoints >= 2) {
+        if (correctJoints == 2) {
+            strokeWeight(5);
+        } else {
+            strokeWeight(2);
+        }
+        line(wristright[i].x, wristright[i].y, wristright[i - 1].x, wristright[i - 1].y);
+    }
+
+    if (correctJoints >= 3) {
+        if (correctJoints == 3) {
+            strokeWeight(5);
+        } else {
+            strokeWeight(2);
+        }
+        line(wristleft[i].x, wristleft[i].y, wristleft[i - 1].x, wristleft[i - 1].y);
+    }
+
+    if (correctJoints >= 4) {
+        if (correctJoints == 4) {
+            strokeWeight(5);
+        } else {
+            strokeWeight(2);
+        }
+        line(head[i].x, head[i].y, head[i - 1].x, head[i - 1].y);
+    }
+
+}
+
+
+
+/* ------ MJ FUNCTIONS ------ */
+
 var ankLeftArray = thriller.ankleleft.slice(0);
 var ankRightArray = thriller.ankleright.slice(0);
+var headArray = thriller.head.slice(0);
+var wristLeftArray = thriller.wristleft.slice(0);
+var wristRightArray = thriller.wristright.slice(0);
 
+function accumulate(array, sw, opacvalue) {
 
-function accumulate(array) {
+    noFill();
 
-    for (var i = 1; i < array.length-1; i++) {
+    for (var i = 1; i < array.length - 1; i++) {
         var curJoint = getMJpos(array[i]);
-        var prevJoint = getMJpos(array[i-1]);
+        var prevJoint = getMJpos(array[i - 1]);
 
-        var opac = (i+1)/(array.length)*.8;
+        var opac = (i + 1) / (array.length) * opacvalue;
         var color = mjAction + opac + ')';
         stroke(color);
+        strokeWeight(sw);
         line(curJoint.x, curJoint.y, prevJoint.x, prevJoint.y);
     }
 }
 
 function drawAccumThriller() {
 
-
-
-    var head = getMJpos(thriller.head[accumfr]);
-
-    var wristLeft = getMJpos(thriller.wristleft[accumfr]);
-    var wristRight = getMJpos(thriller.wristright[accumfr]);
-
-    noFill();
-    strokeWeight(5);
-
-    // move the array around
+    // move the arrays around
     var firstAnkPos = ankLeftArray[0];
     ankLeftArray = ankLeftArray.slice(1);
     ankLeftArray.push(firstAnkPos);
@@ -449,49 +494,60 @@ function drawAccumThriller() {
     ankRightArray = ankRightArray.slice(1);
     ankRightArray.push(firstAnkRightPos);
 
+    var firstWristLeftPos = wristLeftArray[0];
+    wristLeftArray = wristLeftArray.slice(1);
+    wristLeftArray.push(firstWristLeftPos);
+
+    var firstWristRightPos = wristRightArray[0];
+    wristRightArray = wristRightArray.slice(1);
+    wristRightArray.push(firstWristRightPos);
+
+    var firstHeadPos = headArray[0];
+    headArray = headArray.slice(1);
+    headArray.push(firstHeadPos);
 
 
+    if (correctJoints >= 0) {
 
-    accumulate(ankLeftArray);
-    accumulate(ankRightArray);
+        if (correctJoints == 0) {
+            accumulate(ankLeftArray, 4, 2);
+        } else {
+            accumulate(ankLeftArray, 2, 0.4);
+        }
 
+    }
 
+    if (correctJoints >= 1) {
+        if (correctJoints == 1) {
+            accumulate(ankRightArray, 4, 2);
+        } else {
+            accumulate(ankRightArray, 2, 0.4);
+        }
 
+    }
 
-    // var ankLeft = getMJpos(thriller.ankleleft[accumfr]);
-    // var ankLeftNext = getMJpos(thriller.ankleleft[accumfr - 1]);
-    // var ankDist = dist(ankLeft.x, ankLeft.y, ankLeftNext.x, ankLeftNext.y);
-    // //strokeWeight(divider / ankDist + 1);
+    if (correctJoints >= 2) {
+        if (correctJoints == 2) {
+            accumulate(wristLeftArray, 4, 2);
+        } else {
+            accumulate(wristLeftArray, 2, 0.4);
+        }
+    }
 
-    // line(ankLeft.x, ankLeft.y, ankLeftNext.x, ankLeftNext.y);
+    if (correctJoints >= 3) {
+        if (correctJoints == 3) {
+            accumulate(wristRightArray, 4, 2);
+        } else {
+            accumulate(wristRightArray, 2, 0.4);
+        }
+    }
 
-    // var kneeRight = getMJpos(thriller.kneeright[accumfr]);
-    // var kneeRightNext = getMJpos(thriller.kneeright[accumfr - 1]);
-    // var kneeDist = dist(kneeRight.x, kneeRight.y, kneeRightNext.x, kneeRightNext.y);
-    // //strokeWeight(divider / kneeDist + 1);
-
-    // line(kneeRight.x, kneeRight.y, kneeRightNext.x, kneeRightNext.y);
-
-    // var wristRight = getMJpos(thriller.wristright[accumfr]);
-    // var wristRightNext = getMJpos(thriller.wristright[accumfr - 1]);
-    // var wristDist = dist(wristRight.x, wristRight.y, wristRightNext.x, wristRightNext.y);
-    // //strokeWeight(divider / wristDist + 1);
-
-    // line(wristRight.x, wristRight.y, wristRightNext.x, wristRightNext.y);
-
-    // var head = getMJpos(thriller.head[accumfr]);
-    // var headNext = getMJpos(thriller.head[accumfr - 1]);
-    // var headDist = dist(head.x, head.y, headNext.x, headNext.y);
-    // //strokeWeight(divider / headDist + 1);
-
-    // line(head.x, head.y, headNext.x, headNext.y);
-
-
-    // increment through the frames
-    if (accumfr < 88) {
-        accumfr++;
-    } else {
-        accumfr = 1;
+    if (correctJoints >= 4) {
+        if (correctJoints == 4) {
+            accumulate(headArray, 4, 2);
+        } else {
+            accumulate(headArray, 2, 0.5);
+        }
 
     }
 }
@@ -518,52 +574,8 @@ function drawThriller() {
     var wristLeft = getMJpos(thriller.wristleft[fr]);
     var wristRight = getMJpos(thriller.wristright[fr]);
 
-
-    // draw POINTS each type of joint
-    switch (mode) {
-        case (0):
-            fill(mjColor);
-            noStroke();
-            var r = 5;
-            ellipse(ankLeft.x, ankLeft.y, r, r);
-            ellipse(kneeRight.x, kneeRight.y, r, r);
-            ellipse(wristRight.x, wristRight.y, r, r);
-            ellipse(head.x, head.y, r, r);
-
-            break;
-        case (1):
-            fill(mjColor);
-            noStroke();
-            var r = 5;
-            ellipse(ankLeft.x, ankLeft.y, r * 3, r * 3);
-            ellipse(kneeRight.x, kneeRight.y, r * 3, r * 3);
-            ellipse(wristRight.x, wristRight.y, r * 3, r * 3);
-            ellipse(head.x, head.y, r * 3, r * 3);
-            break;
-    }
-
-
-    ellipse(ankRight.x, ankRight.y, r, r);
-    ellipse(kneeLeft.x, kneeLeft.y, r, r);
-    ellipse(hipLeft.x, hipLeft.y, r, r);
-    ellipse(hipRight.x, hipRight.y, r, r);
-    ellipse(shoulderLeft.x, shoulderLeft.y, r, r);
-    ellipse(shoulderRight.x, shoulderRight.y, r, r);
-    ellipse(elbowLeft.x, elbowLeft.y, r, r);
-    ellipse(elbowRight.x, elbowRight.y, r, r);
-    ellipse(wristLeft.x, wristLeft.y, r, r);
-
-    //ellipse(baseSpine.x, baseSpine.y, r, r);
-    //ellipse(midSpine.x, midSpine.y, r, r);
-    ellipse(neck.x, neck.y, r, r);
-
     // draw LINES between joints
     switch (mode) {
-        case (0):
-            noFill();
-            stroke(mjColor);
-            strokeWeight(0.5);
-            break;
         case (1):
             noFill();
             stroke(mjColor);
@@ -594,6 +606,61 @@ function drawThriller() {
     }
 }
 
+function drawConnections() {
+
+    // MJ's points
+    var ankLeft = getMJpos(thriller.ankleleft[fr]);
+    var ankRight = getMJpos(thriller.ankleright[fr]);
+    var kneeLeft = getMJpos(thriller.kneeleft[fr]);
+    var kneeRight = getMJpos(thriller.kneeright[fr]);
+    var hipLeft = getMJpos(thriller.hipleft[fr]);
+    var hipRight = getMJpos(thriller.hipright[fr]);
+    var baseSpine = getMJpos(thriller.basespine[fr]);
+    var midSpine = getMJpos(thriller.midspine[fr]);
+    var neck = getMJpos(thriller.neck[fr]);
+    var head = getMJpos(thriller.head[fr]);
+    var shoulderLeft = getMJpos(thriller.shoulderleft[fr]);
+    var shoulderRight = getMJpos(thriller.shoulderright[fr]);
+    var elbowLeft = getMJpos(thriller.elbowleft[fr]);
+    var elbowRight = getMJpos(thriller.elbowright[fr]);
+    var wristLeft = getMJpos(thriller.wristleft[fr]);
+    var wristRight = getMJpos(thriller.wristright[fr]);
+
+
+    var bodies = bm.getBodies();
+    for (var b = 0; b < bodies.length; b++) {
+        var body = bodies[b];
+
+
+        noFill();
+        stroke(40, 70, 170);
+        strokeWeight(2);
+
+        // draw POINTS for each joint
+        for (var j = 0; j < body.joints.length; j++) {
+            var pos = getPos(body.getPosition(j));
+
+            switch (j) {
+                case 3: // head
+                    line(pos.x, pos.y, head.x, head.y);
+                    break;
+                case 10: // right wrist
+                    line(pos.x, pos.y, wristRight.x, wristRight.y);
+                    break;
+                case 13: // right knee
+                    line(pos.x, pos.y, kneeRight.x, kneeRight.y);
+                    break;
+                case 14: // left ankle
+                    line(pos.x, pos.y, ankLeft.x, ankLeft.y);
+                    break;
+
+            }
+
+        }
+    }
+
+}
+
 
 
 
@@ -618,33 +685,26 @@ function keyPressed() {
             }
             break;
 
-        case UP_ARROW:
-            speed += 1;
-            break;
-        case DOWN_ARROW:
-            speed -= 1;
-            break;
         case LEFT_ARROW:
             connect = !connect;
             break;
-        case 65:
-            actionline = !actionline;
-            break;
+
+
         case 84: // t
-            scvar += 0.05;
+            scvar += 0.03;
             xscl = (width / 2) * scvar;
             yscl = -(width / 2) * scvar;
             break;
         case 71: // g
-            scvar -= 0.05;
+            scvar -= 0.03;
             xscl = round((width / 2) * scvar);
             yscl = round(-(width / 2) * scvar);
             break;
         case 89: // y 
-            yshift += 50;
+            yshift += 30;
             break;
         case 72: // h 
-            yshift -= 50;
+            yshift -= 30;
             break;
         case 82: // r
             mjyshift += 50;
@@ -654,12 +714,24 @@ function keyPressed() {
             break;
 
             // control screen mode for flickering rules
-        case 81: // q
-            if (screenMode < 4) {
+        case 83: // s
+            if (screenMode < 2) {
                 screenMode++;
             } else {
                 screenMode = 1;
             }
+            break;
+
+        case 69: // e
+            if (correctJoints < 4) {
+                correctJoints++;
+            } else {
+                correctJoints = 0;
+            }
+            break;
+
+        case 68: // d
+            debug = !debug;
             break;
     }
 
