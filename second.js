@@ -7,7 +7,7 @@ console.log("sketch started");
 
 var debug = true;
 
-var mode = 1;
+var mode = 0;
 var speed = 1;
 var connect = false;
 
@@ -21,7 +21,7 @@ var exposedTime = 0;
 var maxExposure = 30 * 6;
 
 // manage the flickering
-var screenMode = 1;
+var screenMode = 2;
 // 1 = performer
 // 2 = audience
 
@@ -61,24 +61,7 @@ var oldSkeleton = [];
 var oldJointsNum = 80;
 var allOldSkels = [];
 
-var thrillerVid;
-var playing = false;
-
 function setup() {
-    // make sure the body is hidden to begin with
-    $.ajax({
-        url: "http://sk6385.itp.io:1234/hide",
-        dataType: 'json',
-        success: function(data) {
-            // do nothing
-            console.log("should be hidden" + data);
-        },
-        error: function() {
-            alert("error");
-        },
-    });
-
-
     createCanvas(windowWidth, windowHeight);
 
     frameRate(30);
@@ -95,14 +78,10 @@ function setup() {
     // Set individual frame callbacks for KINECT 1
     kinectron.setColorCallback(performCallback);
     kinectron.setBodiesCallback(bodyCallback);
-    kinectron.startMultiFrame(["body", "color"]);
+    //kinectron.startMultiFrame(["body", "color"]);
 
     audience.setColorCallback(audienceCallback);
-    audience.startMultiFrame(["color"]);
-
-    // Create video
-    thrillerVid = createVideo('thriller.mp4');
-    thrillerVid.style("visibility", "hidden");
+    //audience.startMultiFrame(["color"]);
 
     scvar = 0.78;
     scvar = 0.78;
@@ -136,11 +115,7 @@ function bodyCallback(body) {
 
 
 function performCallback(img) {
-
-}
-
-function audienceCallback(img) {
-    if (mode == 4) {
+    if (mode == 3) {
         var mapheight = (540 / 960) * windowWidth;
         fill(0);
         noStroke(0);
@@ -152,6 +127,10 @@ function audienceCallback(img) {
     }
 }
 
+function audienceCallback(img) {
+
+}
+
 function bodyTracked(body) {
     var id = body.trackingId;
     // When there is a new body, add it
@@ -160,146 +139,60 @@ function bodyTracked(body) {
     else bm.update(body);
 }
 
-
-
 function draw() {
     // save the old skeletons
-    if (mode == 0 || mode == 1) {
+    if (mode == 0) {
         var bodies = bm.getBodies();
-        if (bodies.length != 0) {
-            for (var b = 0; b < 1; b++) {
-                var body = bodies[b];
+        for (var b = 0; b < bodies.length; b++) {
+            var body = bodies[b];
 
-                // save points to past-position array
-                for (var j = 0; j < body.joints.length; j++) {
+            // save points to past-position array
+            for (var j = 0; j < body.joints.length; j++) {
 
-                    var oldJoints = oldSkeleton[j];
-                    oldJoints.push(getPos(body.getPosition(j)));
+                var oldJoints = oldSkeleton[j];
+                oldJoints.push(getPos(body.getPosition(j)));
 
-                    if (oldJoints.length > oldJointsNum) {
-                        oldJoints.shift();
-                    }
+                if (oldJoints.length > oldJointsNum) {
+                    oldJoints.shift();
                 }
             }
         }
-
     }
 
-    // manage the different screens
+    if (frameCount % 10 == 0) {
+        // check if mode should change 
+        $.ajax({
+            url: "http://sk6385.itp.io:1234/check",
+            dataType: 'json',
+            success: function(data) {
+                // do nothing
+
+                if (data.exposed) {
+                    // change to exposed
+                    mode = 3;
+                } else {
+                    mode = 0;
+                }
+            },
+            error: function() {
+                
+            },
+        });
+    }
+
+
+    // manage modes
     switch (mode) {
-        case (1): // LIVE INSTRUCTION
+        case (0): // no skeletons
             background(0);
             //draw mj oldSkeleton
             drawAccumThriller();
-            drawThriller();
-            // draw tracked body
             if (oldSkeleton[0].length == oldJointsNum) {
                 drawAccumSkeleton();
-
-                // compare joints
-                if (frameCount % 30 == 0) {
-                    switch (correctJoints) {
-                        case (0):
-                            compareJoint(oldSkeleton[kinectron.ANKLERIGHT], thriller.ankleleft);
-                            break;
-                        case (1):
-                            compareJoint(oldSkeleton[kinectron.ANKLELEFT], thriller.ankleright);
-                            break;
-                        case (2):
-                            compareJoint(oldSkeleton[kinectron.WRISTRIGHT], thriller.wristleft);
-                            break;
-                        case (3):
-                            compareJoint(oldSkeleton[kinectron.WRISTLEFT], thriller.wristright);
-                        case (4):
-                            compareJoint(oldSkeleton[kinectron.HEAD], thriller.head);
-                            break;
-                    }
-                }
-            };
-
-            if (bm.getBodies().length > 0) {
-                // MONITOR ATTEMPTS
-                // 450 = 90 (num of frames in mj move) * 5
-                // so you have 5 chances
-                if (attempts < maxAttempts) {
-                    attempts++;
-                } else {
-                    if (correctJoints < 4) {
-                        console.log("try a new joint");
-                        // give them a new joint to try
-                        correctJoints++;
-                        attempts = 0;
-
-                    } else {
-                        console.log("you tried enough!");
-                        // reset attempts
-                        attempts = 0;
-                        correctJoints = 0;
-
-                        // expose the performer and audience 
-                        $.ajax({
-                            url: "http://sk6385.itp.io:1234/expose",
-                            dataType: 'json',
-                            success: function(data) {
-                                // do nothing
-                                console.log("should show" + data);
-
-                                exposed = !exposed;
-                                console.log("say hello to your audience");
-                                // switch to audience camera
-                                mode = 4;
-
-                            },
-                            error: function() {
-                                alert("error");
-                            },
-                        });
-                    }
-                }
-            }
-
-            drawSkeleton();
-
-            if (connect) {
-                drawConnections();
             }
             break;
-        case (2): // MJ
-            if (!playing) {
-                var vidHeight = windowWidth / 654 * 480;
-                thrillerVid.style("visibility", "visible");
-                thrillerVid.style("position", "absolute");
-                thrillerVid.style("top", "0");
-                thrillerVid.style("width", windowWidth + "px");
-                thrillerVid.style("height", vidHeight + "px");
-                thrillerVid.loop();
-                playing = true;
-            }
-            break;
+
         case (3): // selfie
-
-            break;
-        case (4): // audience
-            // keep track of timing
-            if (exposedTime < maxExposure) {
-                exposedTime++;
-            } else {
-                exposedTime = 0;
-                // go back to learning;
-                mode = 1;
-
-                $.ajax({
-                    url: "http://sk6385.itp.io:1234/hide",
-                    dataType: 'json',
-                    success: function(data) {
-                        // do nothing
-                        console.log(data);
-                    },
-                    error: function() {
-                        alert("error");
-                    },
-                });
-            }
             break;
     }
 
@@ -584,7 +477,6 @@ function drawThriller() {
     var wristLeft = getMJpos(thriller.wristleft[fr]);
     var wristRight = getMJpos(thriller.wristright[fr]);
 
-
     // draw LINES between joints
     switch (mode) {
         case (1):
@@ -733,41 +625,8 @@ function keyPressed() {
             }
             break;
 
-        case 69: // e
-            if (correctJoints < 4) {
-                correctJoints++;
-            } else {
-                correctJoints = 0;
-            }
-            break;
-
         case 68: // d
             debug = !debug;
-            break;
-
-        case 90: // z
-            $.ajax({
-                url: "http://sk6385.itp.io:1234/expose",
-                dataType: 'json',
-                success: function(data) {
-                    // do nothing
-                    console.log("should show" + data);
-
-                    exposed = !exposed;
-                    console.log("say hello to your audience");
-                    // switch to audience camera
-
-                    if (mode == 1) {
-                        mode = 4;
-                    } else {
-                        mode = 1;
-                    }
-
-                },
-                error: function() {
-                    alert("error");
-                },
-            });
             break;
     }
 
