@@ -12,7 +12,7 @@ var mode = 2;
 // Declare kinectron
 var kinectron = null;
 
-var IP = "172.16.226.69";
+var IP = "172.16.219.228";
 
 var thrillerVid;
 var playing = false;
@@ -37,8 +37,6 @@ function setup() {
     // Create video
     thrillerVid = createVideo('thriller.mp4');
     thrillerVid.style("visibility", "hidden");
-
-    background(0);
 
 }
 

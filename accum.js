@@ -29,7 +29,7 @@ var screenMode = 1;
 var kinectron = null;
 var audience = null;
 
-var IP = "172.16.226.69";
+var IP = "172.16.219.228";
 var IPaudience = "172.16.243.66";
 
 // Managing kinect bodies
@@ -104,16 +104,16 @@ function setup() {
     thrillerVid = createVideo('thriller.mp4');
     thrillerVid.style("visibility", "hidden");
 
-    scvar = 0.78;
-    scvar = 0.78;
+    scvar = 0.45;
+    mjscale = 2;
 
     xscl = (width / 2) * scvar;
     yscl = -(width / 2) * scvar;
     xshift = width / 2;
-    yshift = height / 2 - 80;
+    yshift = height / 2 - 75;
 
-    mjxscl = 1.45;
-    mjyscl = 1.45;
+    mjxscl = 1.45 * mjscale;
+    mjyscl = 1.45 * mjscale;
     mjxshift = 0;
     mjyshift = -60;
 
@@ -304,7 +304,7 @@ function draw() {
     }
 
     if (debug) {
-        textSize(12);
+        textSize(16);
         fill(255);
         noStroke();
         text("screen (s): " + screenMode, 20, 20);
@@ -316,79 +316,85 @@ function draw() {
         text("yscale: (t/g)" + round(yscl), 20, 160);
 
         text("mjY (r/f): " + round(mjyshift), 150, 120);
+        text("mjX (b): " + round(mjxshift), 150, 140);
+        text("mjscale (u/j): " + mjscale, 150, 160);
+
     }
 }
 
 /* ------ SKELETON FUNCTIONS ------- */
 
 function drawSkeleton() {
+
     var bodies = bm.getBodies();
-    for (var b = 0; b < bodies.length; b++) {
-        var body = bodies[b];
+    if (bodies.length != 0) {
+        for (var b = 0; b < 1; b++) {
+            var body = bodies[b];
 
-        // loop through each joint
-        for (var j = 0; j < body.joints.length; j++) {
+            // loop through each joint
+            for (var j = 0; j < body.joints.length; j++) {
 
-            var pos = getPos(body.getPosition(j));
+                var pos = getPos(body.getPosition(j));
 
-            // draw LINES between joints
-            noFill();
-            stroke(skelColor);
-            strokeWeight(boneWeight);
+                // draw LINES between joints
+                noFill();
+                stroke(skelColor);
+                strokeWeight(boneWeight);
 
 
-            switch (j) {
-                case 2: // neck to head 
-                    line(pos.x, pos.y, getPos(body.getPosition(3)).x, getPos(body.getPosition(3)).y);
+                switch (j) {
+                    case 2: // neck to head 
+                        line(pos.x, pos.y, getPos(body.getPosition(3)).x, getPos(body.getPosition(3)).y);
+                        break;
+                    case 4: // shoulders
+                        line(pos.x, pos.y, getPos(body.getPosition(8)).x, getPos(body.getPosition(8)).y);
+                        break;
+                    case 5: // Left elbow
+                        line(pos.x, pos.y, getPos(body.getPosition(4)).x, getPos(body.getPosition(4)).y)
+                        line(pos.x, pos.y, getPos(body.getPosition(6)).x, getPos(body.getPosition(6)).y);
+                        break;
+                    case 9: // right elbow
+                        line(pos.x, pos.y, getPos(body.getPosition(8)).x, getPos(body.getPosition(8)).y);
+                        line(pos.x, pos.y, getPos(body.getPosition(10)).x, getPos(body.getPosition(10)).y);
+                        break;
+                    case 12: // hips
+                        line(pos.x, pos.y, getPos(body.getPosition(16)).x, getPos(body.getPosition(16)).y);
+                        break;
+                    case 13: // left knee
+                        line(pos.x, pos.y, getPos(body.getPosition(12)).x, getPos(body.getPosition(12)).y);
+                        line(pos.x, pos.y, getPos(body.getPosition(14)).x, getPos(body.getPosition(14)).y);
+                        break;
+                    case 17: // right knee
+                        line(pos.x, pos.y, getPos(body.getPosition(16)).x, getPos(body.getPosition(16)).y);
+                        line(pos.x, pos.y, getPos(body.getPosition(18)).x, getPos(body.getPosition(18)).y);
+                        break;
+                }
+            }
+
+
+            var r = 20;
+            var curpos;
+            switch (correctJoints) {
+                case (1):
+                    curpos = getPos(body.getPosition(kinectron.ANKLELEFT));
                     break;
-                case 4: // shoulders
-                    line(pos.x, pos.y, getPos(body.getPosition(8)).x, getPos(body.getPosition(8)).y);
+                case (0):
+                    curpos = getPos(body.getPosition(kinectron.ANKLERIGHT));
                     break;
-                case 5: // Left elbow
-                    line(pos.x, pos.y, getPos(body.getPosition(4)).x, getPos(body.getPosition(4)).y)
-                    line(pos.x, pos.y, getPos(body.getPosition(6)).x, getPos(body.getPosition(6)).y);
+                case (2):
+                    curpos = getPos(body.getPosition(kinectron.WRISTRIGHT));
                     break;
-                case 9: // right elbow
-                    line(pos.x, pos.y, getPos(body.getPosition(8)).x, getPos(body.getPosition(8)).y);
-                    line(pos.x, pos.y, getPos(body.getPosition(10)).x, getPos(body.getPosition(10)).y);
+                case (3):
+                    curpos = getPos(body.getPosition(kinectron.WRISTLEFT));
                     break;
-                case 12: // hips
-                    line(pos.x, pos.y, getPos(body.getPosition(16)).x, getPos(body.getPosition(16)).y);
-                    break;
-                case 13: // left knee
-                    line(pos.x, pos.y, getPos(body.getPosition(12)).x, getPos(body.getPosition(12)).y);
-                    line(pos.x, pos.y, getPos(body.getPosition(14)).x, getPos(body.getPosition(14)).y);
-                    break;
-                case 17: // right knee
-                    line(pos.x, pos.y, getPos(body.getPosition(16)).x, getPos(body.getPosition(16)).y);
-                    line(pos.x, pos.y, getPos(body.getPosition(18)).x, getPos(body.getPosition(18)).y);
+                case (4):
+                    curpos = getPos(body.getPosition(3));
                     break;
             }
+            fill(skelColor);
+            noStroke();
+            ellipse(curpos.x, curpos.y, r, r);
         }
-
-
-        var r = 20;
-        var curpos;
-        switch (correctJoints) {
-            case (1):
-                curpos = getPos(body.getPosition(kinectron.ANKLELEFT));
-                break;
-            case (0):
-                curpos = getPos(body.getPosition(kinectron.ANKLERIGHT));
-                break;
-            case (2):
-                curpos = getPos(body.getPosition(kinectron.WRISTRIGHT));
-                break;
-            case (3):
-                curpos = getPos(body.getPosition(kinectron.WRISTLEFT));
-                break;
-            case (4):
-                curpos = getPos(body.getPosition(3));
-                break;
-        }
-        fill(skelColor);
-        noStroke();
-        ellipse(curpos.x, curpos.y, r, r);
     }
 
 }
@@ -722,6 +728,18 @@ function keyPressed() {
             break;
         case 70: // f
             mjyshift -= 50;
+            break;
+        case 66: // b 
+            mjxshift += 20;
+        case 85: // u 
+            mjscale += 0.05;
+            mjxscl = round(1.45 + mjscale);
+            mjyscl = round(1.45 + mjscale);
+            break;
+        case 74: // j 
+            mjscale -= 0.05;
+            mjxscl = round(1.45 + mjscale);
+            mjyscl = round(1.45 + mjscale);
             break;
 
             // control screen mode for flickering rules

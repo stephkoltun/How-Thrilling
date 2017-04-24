@@ -10,7 +10,7 @@ var mode = 1;
 // Declare kinectron
 var kinectron = null;
 
-var IP = "172.16.226.69";
+var IP = "172.16.219.228";
 
 var thrillerVid;
 var playing = false;
