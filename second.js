@@ -84,7 +84,7 @@ function setup() {
     //audience.startMultiFrame(["color"]);
 
     scvar = 0.45;
-    mjscale = 2;
+    mjscale = 1;
 
     xscl = (width / 2) * scvar;
     yscl = -(width / 2) * scvar;
@@ -192,6 +192,7 @@ function draw() {
             if (oldSkeleton[0].length == oldJointsNum) {
                 drawAccumSkeleton();
             }
+            drawSkeleton();
             break;
 
         case (3): // selfie
@@ -321,50 +322,14 @@ function accumulateSkel(i, opac) {
     var ankleleft = oldSkeleton[14];
     var ankleright = oldSkeleton[18];
 
-    if (correctJoints >= 0) {
-        if (correctJoints == 0) {
-            strokeWeight(5);
-        } else {
-            strokeWeight(2);
-        }
-        line(ankleright[i].x, ankleright[i].y, ankleright[i - 1].x, ankleright[i - 1].y);
-    }
+    strokeWeight(4);
 
-    if (correctJoints >= 1) {
-        if (correctJoints == 1) {
-            strokeWeight(5);
-        } else {
-            strokeWeight(2);
-        }
-        line(ankleleft[i].x, ankleleft[i].y, ankleleft[i - 1].x, ankleleft[i - 1].y);
-    }
+    line(ankleright[i].x, ankleright[i].y, ankleright[i - 1].x, ankleright[i - 1].y);
+    line(ankleleft[i].x, ankleleft[i].y, ankleleft[i - 1].x, ankleleft[i - 1].y);
+    line(wristright[i].x, wristright[i].y, wristright[i - 1].x, wristright[i - 1].y);
+    line(wristleft[i].x, wristleft[i].y, wristleft[i - 1].x, wristleft[i - 1].y);
+    line(head[i].x, head[i].y, head[i - 1].x, head[i - 1].y);
 
-    if (correctJoints >= 2) {
-        if (correctJoints == 2) {
-            strokeWeight(5);
-        } else {
-            strokeWeight(2);
-        }
-        line(wristright[i].x, wristright[i].y, wristright[i - 1].x, wristright[i - 1].y);
-    }
-
-    if (correctJoints >= 3) {
-        if (correctJoints == 3) {
-            strokeWeight(5);
-        } else {
-            strokeWeight(2);
-        }
-        line(wristleft[i].x, wristleft[i].y, wristleft[i - 1].x, wristleft[i - 1].y);
-    }
-
-    if (correctJoints >= 4) {
-        if (correctJoints == 4) {
-            strokeWeight(5);
-        } else {
-            strokeWeight(2);
-        }
-        line(head[i].x, head[i].y, head[i - 1].x, head[i - 1].y);
-    }
 
 }
 
@@ -417,50 +382,12 @@ function drawAccumThriller() {
     headArray = headArray.slice(1);
     headArray.push(firstHeadPos);
 
+    accumulate(ankLeftArray, 4, 2);
+    accumulate(ankRightArray, 4, 2);
+    accumulate(wristLeftArray, 4, 2);
+    accumulate(wristRightArray, 4, 2);
+    accumulate(headArray, 4, 2);
 
-    if (correctJoints >= 0) {
-
-        if (correctJoints == 0) {
-            accumulate(ankLeftArray, 4, 2);
-        } else {
-            accumulate(ankLeftArray, 2, 0.4);
-        }
-
-    }
-
-    if (correctJoints >= 1) {
-        if (correctJoints == 1) {
-            accumulate(ankRightArray, 4, 2);
-        } else {
-            accumulate(ankRightArray, 2, 0.4);
-        }
-
-    }
-
-    if (correctJoints >= 2) {
-        if (correctJoints == 2) {
-            accumulate(wristLeftArray, 4, 2);
-        } else {
-            accumulate(wristLeftArray, 2, 0.4);
-        }
-    }
-
-    if (correctJoints >= 3) {
-        if (correctJoints == 3) {
-            accumulate(wristRightArray, 4, 2);
-        } else {
-            accumulate(wristRightArray, 2, 0.4);
-        }
-    }
-
-    if (correctJoints >= 4) {
-        if (correctJoints == 4) {
-            accumulate(headArray, 4, 2);
-        } else {
-            accumulate(headArray, 2, 0.5);
-        }
-
-    }
 }
 
 
@@ -627,13 +554,13 @@ function keyPressed() {
             mjxshift += 20;
         case 85: // u 
             mjscale += 0.05;
-            mjxscl = round(1.45 + mjscale);
-            mjyscl = round(1.45 + mjscale);
+            mjxscl = 1.45 + mjscale;
+            mjyscl = 1.45 + mjscale;
             break;
         case 74: // j 
             mjscale -= 0.05;
-            mjxscl = round(1.45 + mjscale);
-            mjyscl = round(1.45 + mjscale);
+            mjxscl = 1.45 + mjscale;
+            mjyscl = 1.45 + mjscale;
             break;
 
             // control screen mode for flickering rules
