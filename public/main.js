@@ -5,7 +5,7 @@ Accumulation of Movement
 
 console.log("sketch started");
 
-var localIP = "192.168.1.3:8000";
+
 
 var debug = true;
 
@@ -34,7 +34,7 @@ var audience = null;
 
 // Managing kinect bodies
 var bm = new BodyManager();
-var DEATH_TH = 500;
+var DEATH_TH = 2000;
 
 var skelColor = "rgba(137,35,253,1)";
 var skelAction = "rgba(217,124,238,"
@@ -85,19 +85,19 @@ function setup() {
     // KINECTRON SETUP
     // Define and create an instance of kinectron
     kinectron = new Kinectron(IP);
-    audience = new Kinectron(IPaudience);
+    //audience = new Kinectron(IPaudience);
 
     // Connect with application over peer
     kinectron.makeConnection();
-    audience.makeConnection();
+    //audience.makeConnection();
 
     // Set individual frame callbacks for KINECT 1
     kinectron.setColorCallback(performCallback);
     kinectron.setBodiesCallback(bodyCallback);
     kinectron.startMultiFrame(["body", "color"]);
 
-    audience.setColorCallback(audienceCallback);
-    audience.startMultiFrame(["color"]);
+    //audience.setColorCallback(audienceCallback);
+    //audience.startMultiFrame(["color"]);
 
     // Create video
     // thrillerVid = createVideo('thriller.mp4');
@@ -151,15 +151,20 @@ function audienceCallback(img) {
 function bodyTracked(body) {
     var id = body.trackingId;
     // When there is a new body, add it
-    if (!bm.contains(id)) {
+    // only do this if bm is empty
+
+    if (bm.getBodies().length == 0) {
         console.log("new body");
         bm.add(body);
+    } else if (bm.getBodies().length > 0) {
+        // Otherwise, update it
+        if (bm.contains(id)) {
+            bm.update(body)
+        }
+        else {
+            // disregard this extra body
+        };
     }
-    // Otherwise, update it
-    else {
-
-        bm.update(body)
-    };
 }
 
 
@@ -169,8 +174,8 @@ function draw() {
     if (mode == 0 || mode == 1) {
         var bodies = bm.getBodies();
         if (bodies.length != 0) {
-            for (var b = 0; b < 1; b++) {
-                var body = bodies[b];
+            //for (var b = 0; b < 1; b++) {
+                var body = bodies[0];
 
                 // save points to past-position array
                 for (var j = 0; j < body.joints.length; j++) {
@@ -182,7 +187,7 @@ function draw() {
                         oldJoints.shift();
                     }
                 }
-            }
+            //}
         }
 
     }
@@ -196,7 +201,7 @@ function draw() {
             drawThriller();
             // draw tracked body
             if (oldSkeleton[0].length == oldJointsNum) {
-                //drawAccumSkeleton();
+                drawAccumSkeleton();
 
                 // compare joints
                 if (frameCount % 30 == 0) {
@@ -243,6 +248,8 @@ function draw() {
                             url: "http://" + localIP + "/expose",
                             dataType: 'json',
                             success: function(data) {
+
+                                //audience.startRGB();
 
                                 fill(0);
                                 noStroke(0);
@@ -291,6 +298,7 @@ function draw() {
                 exposedTime = 0;
                 // go back to learning;
                 mode = 1;
+                //audience.stopAll();
 
                 $.ajax({
                     url: "http://" + localIP + "/hide",
