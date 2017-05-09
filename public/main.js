@@ -119,9 +119,12 @@ function setup() {
     background(0);
 
     // populate 2D array
-    for (var i = 0; i < 25; i++) {
-        oldSkeleton[i] = [];
-    }
+    oldSkeleton["head"] = [];
+    oldSkeleton["leftwrist"] = [];
+    oldSkeleton["rightwrist"] = [];
+    oldSkeleton["leftfoot"] = [];
+    oldSkeleton["rightfoot"] = [];
+
 }
 
 function bodyCallback(body) {
@@ -174,20 +177,42 @@ function draw() {
     if (mode == 0 || mode == 1) {
         var bodies = bm.getBodies();
         if (bodies.length != 0) {
-            //for (var b = 0; b < 1; b++) {
+
                 var body = bodies[0];
 
-                // save points to past-position array
-                for (var j = 0; j < body.joints.length; j++) {
 
-                    var oldJoints = oldSkeleton[j];
-                    oldJoints.push(getPos(body.getPosition(j)));
+                // save only the particular joints
 
-                    if (oldJoints.length > oldJointsNum) {
-                        oldJoints.shift();
-                    }
+                oldSkeleton["head"].push(getPos(body.getPosition(kinectron.HEAD)));
+
+                if (oldSkeleton["head"].length > oldJointsNum) {
+                    oldSkeleton["head"].shift();
                 }
-            //}
+
+                oldSkeleton["leftwrist"].push(getPos(body.getPosition(kinectron.WRISTLEFT)));
+
+                if (oldSkeleton["leftwrist"].length > oldJointsNum) {
+                    oldSkeleton["leftwrist"].shift();
+                }
+
+                oldSkeleton["rightwrist"].push(getPos(body.getPosition(kinectron.WRISTRIGHT)));
+
+                if (oldSkeleton["rightwrist"].length > oldJointsNum) {
+                    oldSkeleton["rightwrist"].shift();
+                }
+
+                oldSkeleton["leftfoot"].push(getPos(body.getPosition(kinectron.ANKLELEFT)));
+
+                if (oldSkeleton["leftfoot"].length > oldJointsNum) {
+                    oldSkeleton["leftfoot"].shift();
+                }
+
+                oldSkeleton["rightfoot"].push(getPos(body.getPosition(kinectron.ANKLERIGHT)));
+
+                if (oldSkeleton["rightfoot"].length > oldJointsNum) {
+                    oldSkeleton["rightfoot"].shift();
+                }
+
         }
 
     }
@@ -200,25 +225,26 @@ function draw() {
             drawAccumThriller();
             drawThriller();
             // draw tracked body
-            if (oldSkeleton[0].length == oldJointsNum) {
+            console.log(oldSkeleton);
+            if (oldSkeleton["rightfoot"].length == oldJointsNum) {
                 drawAccumSkeleton();
 
                 // compare joints
                 if (frameCount % 30 == 0) {
                     switch (correctJoints) {
                         case (0):
-                            compareJoint(oldSkeleton[kinectron.ANKLERIGHT], thriller.ankleleft);
+                            compareJoint(oldSkeleton["rightfoot"], thriller.ankleleft);
                             break;
                         case (1):
-                            compareJoint(oldSkeleton[kinectron.ANKLELEFT], thriller.ankleright);
+                            compareJoint(oldSkeleton["leftfoot"], thriller.ankleright);
                             break;
                         case (2):
-                            compareJoint(oldSkeleton[kinectron.WRISTRIGHT], thriller.wristleft);
+                            compareJoint(oldSkeleton["rightwrist"], thriller.wristleft);
                             break;
                         case (3):
-                            compareJoint(oldSkeleton[kinectron.WRISTLEFT], thriller.wristright);
+                            compareJoint(oldSkeleton["leftwrist"], thriller.wristright);
                         case (4):
-                            compareJoint(oldSkeleton[kinectron.HEAD], thriller.head);
+                            compareJoint(oldSkeleton["head"], thriller.head);
                             break;
                     }
                 }
@@ -433,11 +459,11 @@ function accumulateSkel(i, opac) {
     stroke(color);
 
 
-    var head = oldSkeleton[3];
-    var wristleft = oldSkeleton[6];
-    var wristright = oldSkeleton[10];
-    var ankleleft = oldSkeleton[14];
-    var ankleright = oldSkeleton[18];
+    var head = oldSkeleton["head"];
+    var wristleft = oldSkeleton["leftwrist"];
+    var wristright = oldSkeleton["rightwrist"];
+    var ankleleft = oldSkeleton["leftfoot"];
+    var ankleright = oldSkeleton["rightfoot"];
 
     if (correctJoints >= 0) {
         if (correctJoints == 0) {
