@@ -5,6 +5,8 @@ Accumulation of Movement
 
 console.log("sketch started");
 
+var localIP = "192.168.1.3:8000";
+
 var debug = true;
 
 var mode = 1;
@@ -13,12 +15,12 @@ var connect = false;
 
 var correctJoints = 0;
 var attempts = 0;
-var maxLoop = 8;
+var maxLoop = 6;
 var maxAttempts = maxLoop * 90;
 
 var exposed = false;
 var exposedTime = 0;
-var maxExposure = 30 * 6;
+var maxExposure = 30 * 9;
 
 // manage the flickering
 var screenMode = 1;
@@ -29,8 +31,6 @@ var screenMode = 1;
 var kinectron = null;
 var audience = null;
 
-var IP = "172.16.219.228";
-var IPaudience = "172.16.243.66";
 
 // Managing kinect bodies
 var bm = new BodyManager();
@@ -65,13 +65,12 @@ var thrillerVid;
 var playing = false;
 
 function setup() {
-    // make sure the body is hidden to begin with
+    //make sure the body is hidden to begin with
     $.ajax({
-        url: "http://sk6385.itp.io:1234/hide",
+        url: "http://" + localIP + "/hide",
         dataType: 'json',
         success: function(data) {
             // do nothing
-            console.log("should be hidden" + data);
         },
         error: function() {
             alert("error");
@@ -101,11 +100,11 @@ function setup() {
     audience.startMultiFrame(["color"]);
 
     // Create video
-    thrillerVid = createVideo('thriller.mp4');
-    thrillerVid.style("visibility", "hidden");
+    // thrillerVid = createVideo('thriller.mp4');
+    // thrillerVid.style("visibility", "hidden");
 
     scvar = 0.45;
-    mjscale = 2;
+    mjscale = .8;
 
     xscl = (width / 2) * scvar;
     yscl = -(width / 2) * scvar;
@@ -142,9 +141,6 @@ function performCallback(img) {
 function audienceCallback(img) {
     if (mode == 4) {
         var mapheight = (540 / 960) * windowWidth;
-        fill(0);
-        noStroke(0);
-        rect(0, 0, windowWidth, windowHeight);
 
         loadImage(img.src, function(loadedImage) {
             image(loadedImage, 0, 0, windowWidth, mapheight);
@@ -155,9 +151,15 @@ function audienceCallback(img) {
 function bodyTracked(body) {
     var id = body.trackingId;
     // When there is a new body, add it
-    if (!bm.contains(id)) bm.add(body);
+    if (!bm.contains(id)) {
+        console.log("new body");
+        bm.add(body);
+    }
     // Otherwise, update it
-    else bm.update(body);
+    else {
+
+        bm.update(body)
+    };
 }
 
 
@@ -194,7 +196,7 @@ function draw() {
             drawThriller();
             // draw tracked body
             if (oldSkeleton[0].length == oldJointsNum) {
-                drawAccumSkeleton();
+                //drawAccumSkeleton();
 
                 // compare joints
                 if (frameCount % 30 == 0) {
@@ -238,11 +240,13 @@ function draw() {
 
                         // expose the performer and audience 
                         $.ajax({
-                            url: "http://sk6385.itp.io:1234/expose",
+                            url: "http://" + localIP + "/expose",
                             dataType: 'json',
                             success: function(data) {
-                                // do nothing
-                                console.log("should show" + data);
+
+                                fill(0);
+                                noStroke(0);
+                                rect(0, 0, windowWidth, windowHeight);
 
                                 exposed = !exposed;
                                 console.log("say hello to your audience");
@@ -280,7 +284,7 @@ function draw() {
 
             break;
         case (4): // audience
-            // keep track of timing
+            //keep track of timing
             if (exposedTime < maxExposure) {
                 exposedTime++;
             } else {
@@ -289,11 +293,10 @@ function draw() {
                 mode = 1;
 
                 $.ajax({
-                    url: "http://sk6385.itp.io:1234/hide",
+                    url: "http://" + localIP + "/hide",
                     dataType: 'json',
                     success: function(data) {
                         // do nothing
-                        console.log(data);
                     },
                     error: function() {
                         alert("error");
@@ -318,6 +321,8 @@ function draw() {
         text("mjY (r/f): " + round(mjyshift), 150, 120);
         text("mjX (b): " + round(mjxshift), 150, 140);
         text("mjscale (u/j): " + mjscale, 150, 160);
+
+        text("framerate: " + frameRate().toFixed(2), 280, 20);
 
     }
 }
@@ -765,17 +770,19 @@ function keyPressed() {
 
         case 90: // z
             $.ajax({
-                url: "http://sk6385.itp.io:1234/expose",
+                url: "http://" + localIP + "/expose",
                 dataType: 'json',
                 success: function(data) {
                     // do nothing
-                    console.log("should show" + data);
 
                     exposed = !exposed;
                     console.log("say hello to your audience");
                     // switch to audience camera
 
                     if (mode == 1) {
+                        fill(0);
+                        noStroke(0);
+                        rect(0, 0, windowWidth, windowHeight);
                         mode = 4;
                     } else {
                         mode = 1;
