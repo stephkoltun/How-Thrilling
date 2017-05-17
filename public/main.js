@@ -15,12 +15,12 @@ var connect = false;
 
 var correctJoints = 0;
 var attempts = 0;
-var maxLoop = 6;
+var maxLoop = 4;
 var maxAttempts = maxLoop * 90;
 
 var exposed = false;
 var exposedTime = 0;
-var maxExposure = 30 * 9;
+var maxExposure = 30 * 12;
 
 // manage the flickering
 var screenMode = 1;
@@ -34,7 +34,7 @@ var audience = null;
 
 // Managing kinect bodies
 var bm = new BodyManager();
-var DEATH_TH = 2000;
+var DEATH_TH = 3000;
 
 var skelColor = "rgba(137,35,253,1)";
 var skelAction = "rgba(217,124,238,"
@@ -58,7 +58,7 @@ var accumfr = 1;
 
 // variables for saving
 var oldSkeleton = [];
-var oldJointsNum = 80;
+var oldJointsNum = 60;
 var allOldSkels = [];
 
 var thrillerVid;
@@ -85,19 +85,19 @@ function setup() {
     // KINECTRON SETUP
     // Define and create an instance of kinectron
     kinectron = new Kinectron(IP);
-    //audience = new Kinectron(IPaudience);
+    audience = new Kinectron(IPaudience);
 
     // Connect with application over peer
     kinectron.makeConnection();
-    //audience.makeConnection();
+    audience.makeConnection();
 
     // Set individual frame callbacks for KINECT 1
     kinectron.setColorCallback(performCallback);
     kinectron.setBodiesCallback(bodyCallback);
     kinectron.startMultiFrame(["body", "color"]);
 
-    //audience.setColorCallback(audienceCallback);
-    //audience.startMultiFrame(["color"]);
+    audience.setColorCallback(audienceCallback);
+    audience.startMultiFrame(["color"]);
 
     // Create video
     // thrillerVid = createVideo('thriller.mp4');
@@ -225,7 +225,7 @@ function draw() {
             drawAccumThriller();
             drawThriller();
             // draw tracked body
-            console.log(oldSkeleton);
+            
             if (oldSkeleton["rightfoot"].length == oldJointsNum) {
                 drawAccumSkeleton();
 
@@ -275,8 +275,6 @@ function draw() {
                             dataType: 'json',
                             success: function(data) {
 
-                                //audience.startRGB();
-
                                 fill(0);
                                 noStroke(0);
                                 rect(0, 0, windowWidth, windowHeight);
@@ -324,7 +322,6 @@ function draw() {
                 exposedTime = 0;
                 // go back to learning;
                 mode = 1;
-                //audience.stopAll();
 
                 $.ajax({
                     url: "http://" + localIP + "/hide",

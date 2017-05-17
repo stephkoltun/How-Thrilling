@@ -68,7 +68,7 @@ function draw() {
             playing = true;
         }
 
-        if (frameCount % 400 == 0) {
+        if (frameCount % 300 == 0) {
             console.log("switch back to live feed");
             mode = 1;
             if (playing == true) {
@@ -80,7 +80,7 @@ function draw() {
     }
 
     if (mode == 1) {
-        if (frameCount % 1800 == 0) {
+        if (frameCount % 1600 == 0) {
             console.log("switch to MJ");
             mode = 2;
         }
