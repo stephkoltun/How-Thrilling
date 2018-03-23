@@ -11,6 +11,7 @@ var BodyManager = function(){
     for(var id in bodies) {
       var body = bodies[id];
       if(body.isDead()) {
+        console.log("remove dead body");
         delete bodies[id];
         pop--;
       }

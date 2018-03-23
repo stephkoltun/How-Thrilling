@@ -1,0 +1,42 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Karla;
+}
+
+video {
+	position:  absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+}
+
+.index {
+  margin: 60px auto;
+  width: 600px;
+}
+
+.index > section {
+  margin: 50px 0;
+}
+
+.index h2 {
+  margin: 15px 0;
+}
+
+.index h3 {
+  margin: 0;
+}
+
+.index p {
+  margin: 0;
+}
+
+
+.index div {
+  margin: 10px 0;
+}
+
+a, a:visited, a:hover {
+  color: #000;
+}
