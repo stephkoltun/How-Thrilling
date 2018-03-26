@@ -13,6 +13,46 @@ console.log("make connections");
 
 var peer = new Peer(from, options);
 
+var kinectron = null;
+function setup() {
+  console.log("setup");
+    createCanvas(windowWidth, windowHeight);
+    frameRate(30);
+
+    // KINECTRON SETUP
+    // Define and create an instance of kinectron
+    kinectron = new Kinectron("dancing",
+    {
+      "host": "sk6385.itp.io",
+      "port": "9000",
+      "path": "/peerjs",
+      "secure":"true"
+    });
+
+    // Connect with application over peer
+    kinectron.makeConnection();
+    // Set individual frame callbacks for KINECT 1
+    kinectron.setColorCallback(audienceCallback);
+    kinectron.setBodiesCallback(bodiesCallback);
+
+    background(0);
+}
+
+function bodiesCallback(body) {
+  //do nothing
+}
+
+function audienceCallback(img) {
+  var mapheight = (540 / 960) * windowWidth;
+
+  loadImage(img.src, function(loadedImage) {
+      image(loadedImage, 0, 0, windowWidth, mapheight);
+  });
+}
+
+$("#back").hide();
+
+
 peer.on('open', function(id) {
   console.log("My peer id is: " + id);
 })
@@ -72,14 +112,14 @@ function onReceiveCall(call){
     videoError);
 
     //commented this out because we dont need to see anything
-    call.on('stream', onReceiveStream);
+    // call.on('stream', onReceiveStream);
 }
 
 function onReceiveStream(stream){
-  console.log(stream);
-    var video = document.querySelector('video');
-    video.src = window.URL.createObjectURL(stream);
-    video.onloadedmetadata = function(){
-        console.log('video loaded');
-    }
+  // console.log(stream);
+  //   var video = document.querySelector('video');
+  //   video.src = window.URL.createObjectURL(stream);
+  //   video.onloadedmetadata = function(){
+  //       console.log('video loaded');
+  //   }
 }

@@ -50,6 +50,7 @@ var oldJointsNum = 20;
 var allOldSkels = [];
 
 var thrillerVid;
+var keyImage;
 
 function setup() {
     //make sure the body is hidden to begin with
@@ -127,11 +128,12 @@ function draw() {
   // manage the different screens
   switch (mode) {
     case (1): // we are stickfigures with a keyed body
+
       var bodies = bm.getBodies();
       // save the old skeletons
       if (bodies.length != 0) {
-          var body = bodies[0];
-          saveBodyPoints();
+              var body = bodies[0];
+              saveBodyPoints();
 
           if (danceTime < maxDance) {
               danceTime++;
@@ -141,13 +143,12 @@ function draw() {
               mode = 2;
           }
       }
-
+      background(0);
       if (keyImage != null) {
         var offset = (1067-800)/2*(-1);
-        image(keyImage,offset,0,1067,600);
-      } else {
-        background(0);
+        image(keyImage,0,0,960/2,540/2);
       }
+      drawSkeleton();
       break;
     case (2): // we are stickfigures with michael jackson video
       //keep track of timing
@@ -164,7 +165,7 @@ function draw() {
       break;
   }
 
-  drawSkeleton();
+
 
   if (debug) {
     showDebugText()
@@ -175,17 +176,10 @@ function showDebugText() {
   textSize(16);
   fill(255);
   noStroke();
-  text("screen (s): " + mode, 20, 20);
   text("mode (>): " + mode, 20, 40);
-  text("connect: " + connect, 20, 70);
-  text("attempt: " + floor(attempts / 90), 20, 90)
   text("yshift (y/h): " + round(yshift), 20, 120);
   text("xscale (t/g): " + round(xscl), 20, 140);
   text("yscale: (t/g)" + round(yscl), 20, 160);
-
-  text("mjY (r/f): " + round(mjyshift), 150, 120);
-  text("mjX (b): " + round(mjxshift), 150, 140);
-  text("mjscale (u/j): " + mjscale, 150, 160);
 
   text("framerate: " + frameRate().toFixed(2), 280, 20);
 }
