@@ -8,12 +8,6 @@ console.log("sketch started");
 var debug = true;
 var mode = 1;
 var speed = 1;
-var connect = false;
-
-var correctJoints = 0;
-var attempts = 0;
-var maxLoop = 4;
-var maxAttempts = maxLoop * 90;
 
 var exposed = false;
 var exposedTime = 0;
@@ -52,8 +46,10 @@ var accumfr = 1;
 
 // variables for saving
 var oldSkeleton = [];
-var oldJointsNum = 60;
+var oldJointsNum = 20;
 var allOldSkels = [];
+
+var thrillerVid;
 
 function setup() {
     //make sure the body is hidden to begin with
@@ -75,7 +71,15 @@ function setup() {
     // KINECTRON SETUP
     // Define and create an instance of kinectron
     // connect to our peer server
-    kinectron = new Kinectron("dancing",
+    kinectron = new Kinectron("audience",
+    {
+      "host": "sk6385.itp.io",
+      "port": "9000",
+      "path": "/peerjs",
+      "secure":"true"
+    });
+
+    elsewhereKinect = new Kinectron("dancing",
     {
       "host": "sk6385.itp.io",
       "port": "9000",
@@ -85,11 +89,17 @@ function setup() {
 
     // Connect with application over peer
     kinectron.makeConnection();
-
     // Set individual frame callbacks for KINECT 1
     kinectron.setBodiesCallback(bodyCallback);
-    kinectron.setColorCallback(colorCallback);
-    kinectron.startMultiFrame(["body", "color"]);
+    kinectron.startBodies();
+
+    elsewhereKinect.makeConnection();
+    elsewhereKinect.setKeyCallback(keyCallback);
+    // the other kinect will start the key frame
+
+    thrillerVid = createVideo('assets/thriller.mp4');
+    thrillerVid.hide();
+    thrillerVid.loop();
 
     scvar = 0.45;
     mjscale = .8;
@@ -116,75 +126,45 @@ function draw() {
 
   // manage the different screens
   switch (mode) {
-      case (1): // LIVE INSTRUCTION
-        var bodies = bm.getBodies();
-        // save the old skeletons
-        if (bodies.length != 0) {
-                var body = bodies[0];
-                saveBodyPoints();
-        }
+    case (1): // we are stickfigures with a keyed body
+      var bodies = bm.getBodies();
+      // save the old skeletons
+      if (bodies.length != 0) {
+          var body = bodies[0];
+          saveBodyPoints();
 
+          if (danceTime < maxDance) {
+              danceTime++;
+          } else {
+              danceTime = 0;
+              // switch to something else
+              mode = 2;
+          }
+      }
+
+      if (keyImage != null) {
+        var offset = (1067-800)/2*(-1);
+        image(keyImage,offset,0,1067,600);
+      } else {
         background(0);
-        //draw mj oldSkeleton
-        drawThriller();
-
-        if (bm.getBodies().length > 0) {
-
-            if (danceTime < maxDance) {
-                danceTime++;
-            } else {
-                danceTime = 0;
-
-                // switch to audience camera
-                mode = 2;
-                $("#cnv").hide();
-
-                // expose the performer and audience
-                $.ajax({
-                    url: "https://" + liveIP + "/expose",
-                    dataType: 'json',
-                    success: function(data) {
-                        exposed = !exposed;
-                        console.log("say hello to your audience");
-
-                    },
-                    error: function() {
-                        alert("error");
-                    },
-                });
-            }
-        }
-
-        drawSkeleton();
-
-        if (connect) {
-            drawConnections();
-        }
-        break;
-    case (2): // audience
-        //keep track of timing
-        // hide the sketch
-        if (exposedTime < maxExposure) {
-            exposedTime++;
-        } else {
-            exposedTime = 0;
-            // go back to dancing
-            mode = 1;
-            $("#cnv").show();
-
-            $.ajax({
-                url: "https://" + liveIP + "/hide",
-                dataType: 'json',
-                success: function(data) {
-                    // do nothing
-                },
-                error: function() {
-                    alert("error");
-                },
-            });
-        }
-        break;
+      }
+      break;
+    case (2): // we are stickfigures with michael jackson video
+      //keep track of timing
+      // hide the sketch
+      var vidWidth = 600 / 480 * 654;
+      image(thrillerVid,0,0,vidWidth,600);
+      if (exposedTime < maxExposure) {
+          exposedTime++;
+      } else {
+          exposedTime = 0;
+          // go back to dancing
+          mode = 1;
+      }
+      break;
   }
+
+  drawSkeleton();
 
   if (debug) {
     showDebugText()
@@ -210,9 +190,10 @@ function showDebugText() {
   text("framerate: " + frameRate().toFixed(2), 280, 20);
 }
 
-
-function colorCallback(img) {
-  // do nothing here
+function keyCallback(img) {
+  loadImage(img.src, function(loadedBodyImage) {
+    keyImage = loadedBodyImage;
+  })
 }
 
 function bodyCallback(body) {
@@ -266,96 +247,4 @@ function saveBodyPoints() {
       oldSkeleton["rightfoot"].shift();
   }
 
-}
-
-function keyPressed() {
-    switch (keyCode) {
-
-        case LEFT_ARROW:
-            connect = !connect;
-            break;
-
-        case 84: // t
-            scvar += 0.03;
-            xscl = (width / 2) * scvar;
-            yscl = -(width / 2) * scvar;
-            break;
-        case 71: // g
-            scvar -= 0.03;
-            xscl = round((width / 2) * scvar);
-            yscl = round(-(width / 2) * scvar);
-            break;
-        case 89: // y
-            yshift += 30;
-            break;
-        case 72: // h
-            yshift -= 30;
-            break;
-        case 82: // r
-            mjyshift += 50;
-            break;
-        case 70: // f
-            mjyshift -= 50;
-            break;
-        case 66: // b
-            mjxshift += 20;
-        case 85: // u
-            mjscale += 0.05;
-            mjxscl = round(1.45 + mjscale);
-            mjyscl = round(1.45 + mjscale);
-            break;
-        case 74: // j
-            mjscale -= 0.05;
-            mjxscl = round(1.45 + mjscale);
-            mjyscl = round(1.45 + mjscale);
-            break;
-
-            // control screen mode for flickering rules
-        case 83: // s
-            if (mode < 2) {
-                mode++;
-            } else {
-                mode = 1;
-            }
-            break;
-
-        case 69: // e
-            if (correctJoints < 4) {
-                correctJoints++;
-            } else {
-                correctJoints = 0;
-            }
-            break;
-
-        case 68: // d
-            debug = !debug;
-            break;
-
-        case 90: // z
-            $.ajax({
-                url: "https://" + liveIP + "/expose",
-                dataType: 'json',
-                success: function(data) {
-                    // do nothing
-
-                    exposed = !exposed;
-                    console.log("say hello to your audience");
-                    // switch to audience camera
-
-                    if (mode == 1) {
-                        fill(0);
-                        noStroke(0);
-                        rect(0, 0, windowWidth, windowHeight);
-                        mode = 4;
-                    } else {
-                        mode = 1;
-                    }
-
-                },
-                error: function() {
-                    alert("error");
-                },
-            });
-            break;
-    }
 }

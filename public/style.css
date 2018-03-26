@@ -4,11 +4,30 @@ body {
   font-family: Karla;
 }
 
-video {
-	position:  absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
+#cnv, video {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  z-index: 10;
+}
+
+video#back {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  z-index: 0;
+}
+
+video#mj {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: auto;
+  transform: translate(-50%,-50%);
+  z-index: 0;
 }
 
 .index {
