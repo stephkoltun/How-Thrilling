@@ -5,23 +5,24 @@ function getPos(joint) {
     return createVector((joint.x * xscl) + xshift, (joint.y * yscl) + yshift);
 }
 
-function drawSkeleton() {
+function drawSkeleton(maxSkeletons, boneColors) {
+
     var bodies = bm.getBodies();
     var drawEllipse = false;
 
     if (bodies.length != 0) {
-        for (var b = 0; b < 1; b++) {
+        for (var b = 0; b < maxSkeletons; b++) {
             var body = bodies[b];
+
+            // draw LINES between joints
+            noFill();
+            stroke(boneColors[b]);
+            strokeWeight(boneWeight);
 
             // loop through each joint
             for (var j = 0; j < body.joints.length; j++) {
 
                 var pos = getPos(body.getPosition(j));
-
-                // draw LINES between joints
-                noFill();
-                stroke(skelColor);
-                strokeWeight(boneWeight);
 
                 switch (j) {
                     case 2: // neck to head

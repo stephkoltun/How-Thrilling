@@ -137,7 +137,7 @@ function draw() {
             }
         }
 
-        drawSkeleton();
+        drawSkeleton(1, [skelColor]);
 
         if (keyImage != null) {
           var offset = (960-800)/2*(-1);

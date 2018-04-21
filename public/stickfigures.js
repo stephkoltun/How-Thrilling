@@ -141,7 +141,7 @@ function draw() {
             }
         }
 
-        drawSkeleton();
+        drawSkeleton(1, [skelColor]);
 
         break;
     case (2): // audience
