@@ -24,7 +24,7 @@ var maxDance = 30 * 12;
 
 // Declare kinectron
 var kinectron = null;
-var audience = null;
+var teachingKinectron = null;
 
 // Managing kinect bodies
 var bm = new BodyManager();
@@ -32,8 +32,7 @@ var DEATH_TH = 3000;
 
 var skelColor = "rgba(137,35,253,1)";
 var skelAction = "rgba(217,124,238,"
-var mjColor = "rgba(24,210,255,1)";
-var mjAction = "rgba(140,207,203,";
+
 var boneWeight = 10;
 
 // Mapping Kinect data to projecion
@@ -55,18 +54,10 @@ var oldSkeleton = [];
 var oldJointsNum = 60;
 var allOldSkels = [];
 
+var keyImage;
+
 function setup() {
     //make sure the body is hidden to begin with
-    $.ajax({
-        url: "https://" + liveIP + "/hide",
-        dataType: 'json',
-        success: function(data) {
-            // do nothing
-        },
-        error: function() {
-            alert("error");
-        },
-    });
     var cnv = createCanvas(800, 600);
     cnv.parent("cnv");  // set parent of canvas
     frameRate(30);
@@ -75,7 +66,15 @@ function setup() {
     // KINECTRON SETUP
     // Define and create an instance of kinectron
     // connect to our peer server
-    kinectron = new Kinectron("dancing",
+    kinectron = new Kinectron("audience",
+    {
+      "host": "sk6385.itp.io",
+      "port": "9000",
+      "path": "/peerjs",
+      "secure":"true"
+    });
+
+    teachingKinectron = new Kinectron("dancing",
     {
       "host": "sk6385.itp.io",
       "port": "9000",
@@ -89,7 +88,10 @@ function setup() {
     // Set individual frame callbacks for KINECT 1
     kinectron.setBodiesCallback(bodyCallback);
     kinectron.setColorCallback(colorCallback);
-    kinectron.startMultiFrame(["body", "color"]);
+    //kinectron.startMultiFrame(["body", "color"]);
+
+    teachingKinectron.makeConnection();
+    teachingKinectron.setKeyCallback(addKey);
 
     scvar = 0.6;
     mjscale = .8;
@@ -99,10 +101,6 @@ function setup() {
     xshift = width / 2;
     yshift = height / 2 - 25;
 
-    mjxscl = 1.45 * mjscale;
-    mjyscl = 1.45 * mjscale;
-    mjxshift = 0;
-    mjyshift = -20;
 
     // populate 2D array
     oldSkeleton["head"] = [];
@@ -120,18 +118,16 @@ function draw() {
         var bodies = bm.getBodies();
         // save the old skeletons
         if (bodies.length != 0) {
-                var body = bodies[0];
-                saveBodyPoints(body);
+          var body = bodies[0];
+          saveBodyPoints(body);
         }
 
         background(0);
-        //draw mj oldSkeleton
-        drawThriller();
 
         if (bm.getBodies().length > 0) {
 
             if (danceTime < maxDance) {
-                danceTime++;
+                //danceTime++;
             } else {
                 danceTime = 0;
                 // switch to audience camera
@@ -142,6 +138,11 @@ function draw() {
         }
 
         drawSkeleton();
+
+        if (keyImage != null) {
+          var offset = (960-800)/2*(-1);
+          image(keyImage,offset,100,720,405);
+        }
 
         break;
     case (2): // audience
@@ -171,13 +172,15 @@ function showDebugText() {
   text("xscale (t/g): " + round(xscl), 20, 40);
   text("yscale: (t/g)" + round(yscl), 20, 60);
 
-  text("mjY (r/f): " + round(mjyshift), 150, 20);
-  text("mjX (b): " + round(mjxshift), 150, 40);
-  text("mjscale (u/j): " + mjscale, 150, 660);
-
   text("framerate: " + frameRate().toFixed(2), 20, 90);
 }
 
+function addKey(img) {
+  loadImage(img.src, function(loadedBodyImage) {
+    //console.log("key image!");
+    keyImage = loadedBodyImage;
+  })
+}
 
 function colorCallback(img) {
   // do nothing here
@@ -238,92 +241,8 @@ function saveBodyPoints(body) {
 
 function keyPressed() {
     switch (keyCode) {
-
-        case LEFT_ARROW:
-            connect = !connect;
-            break;
-
-        case 84: // t
-            scvar += 0.03;
-            xscl = (width / 2) * scvar;
-            yscl = -(width / 2) * scvar;
-            break;
-        case 71: // g
-            scvar -= 0.03;
-            xscl = round((width / 2) * scvar);
-            yscl = round(-(width / 2) * scvar);
-            break;
-        case 89: // y
-            yshift += 30;
-            break;
-        case 72: // h
-            yshift -= 30;
-            break;
-        case 82: // r
-            mjyshift += 50;
-            break;
-        case 70: // f
-            mjyshift -= 50;
-            break;
-        case 66: // b
-            mjxshift += 20;
-        case 85: // u
-            mjscale += 0.05;
-            mjxscl = round(1.45 + mjscale);
-            mjyscl = round(1.45 + mjscale);
-            break;
-        case 74: // j
-            mjscale -= 0.05;
-            mjxscl = round(1.45 + mjscale);
-            mjyscl = round(1.45 + mjscale);
-            break;
-
-            // control screen mode for flickering rules
-        case 83: // s
-            if (mode < 2) {
-                mode++;
-            } else {
-                mode = 1;
-            }
-            break;
-
-        case 69: // e
-            if (correctJoints < 4) {
-                correctJoints++;
-            } else {
-                correctJoints = 0;
-            }
-            break;
-
         case 68: // d
             debug = !debug;
-            break;
-
-        case 90: // z
-            $.ajax({
-                url: "https://" + liveIP + "/expose",
-                dataType: 'json',
-                success: function(data) {
-                    // do nothing
-
-                    exposed = !exposed;
-                    console.log("say hello to your audience");
-                    // switch to audience camera
-
-                    if (mode == 1) {
-                        fill(0);
-                        noStroke(0);
-                        rect(0, 0, windowWidth, windowHeight);
-                        mode = 4;
-                    } else {
-                        mode = 1;
-                    }
-
-                },
-                error: function() {
-                    alert("error");
-                },
-            });
             break;
     }
 }
