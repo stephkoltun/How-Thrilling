@@ -7,7 +7,7 @@ var debug = true;
 var bm = new BodyManager();
 var DEATH_TH = 2000;
 
-var skelColors = ["rgba(137,35,253,1)", "rgba(37,135,253,1)", "rgba(250,130,37,1)", "rgba(240,90,80,1)", "rgba(255,250,56,1)", "rgba(107,75,53,1)"];
+var skelColors = ["rgba(177,35,253,1)", "rgba(37,135,253,1)", "rgba(250,130,37,1)", "rgba(240,90,80,1)", "rgba(255,250,56,1)", "rgba(37,203,157,1)"];
 var boneWeight = 10;
 
 // Mapping Kinect data to projecion
@@ -18,10 +18,12 @@ var scl = true;
 var watching = true;
 var performerImage;
 
-var currentTiming = 0;
-var maxTiming = 30 * 8;
+var seconds = 6;
 
-var timingSwitch = 8 * 1000;
+var currentTiming = 0;
+var maxTiming = 30 * seconds;
+
+var timingSwitch = seconds * 1000;
 
 // Declare kinectron
 var kinectron = null;
@@ -86,33 +88,33 @@ function draw() {
     }
 
     if (bodies.length != 0) {
-      if (Date.now() % timingSwitch == 0) {
-        watching = false;
-      }
-
-      // if (currentTiming < maxTiming) {
-      //   currentTiming++;
-      // } else {
+      // if (Date.now() % timingSwitch == 0) {
       //   watching = false;
-      //   currentTiming = 0;
       // }
+
+      if (currentTiming < maxTiming) {
+        currentTiming++;
+      } else {
+        watching = false;
+        currentTiming = 0;
+      }
     }
   } else {
     // draw cutout michael and stick figures
     if (bodies.length > 0) {
       image(thrillerVid,0,0,vidWidth,windowHeight);
       drawSkeleton(bodies.length, skelColors);
-
-      if (Date.now() % timingSwitch == 0) {
-        watching = true;
-      }
-
-      // if (currentTiming < maxTiming) {
-      //   currentTiming++;
-      // } else {
+      //
+      // if (Date.now() % timingSwitch == 0) {
       //   watching = true;
-      //   currentTiming = 0;
       // }
+
+      if (currentTiming < maxTiming) {
+        currentTiming++;
+      } else {
+        watching = true;
+        currentTiming = 0;
+      }
     } else {
       watching = true;
       //currentTiming = 0;

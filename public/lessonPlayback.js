@@ -6,7 +6,7 @@ const maxFramesToSave = 30*saveForSeconds;
 var savedFrames = [];
 var playbackFrame = 0;  // tracking number
 
-var timingSwitch = saveForSeconds * 1000;
+var timingSwitch = saveForSeconds;
 
 var currentImage;
 
@@ -65,7 +65,8 @@ function draw() {
     //image(savedFrames[playbackFrame], 0, 0, windowWidth, mapheight);
     image(savedFrames[playbackFrame], 0, 0, windowWidth, windowHeight);
 
-    // if (Date.now() % timingSwitch <= 5) {
+    // var now = floor(Date.now()/1000)
+    // if (now % timingSwitch == 0) {
     //   console.log("change");
     //   live = true;
     //   //song.jump(71);
