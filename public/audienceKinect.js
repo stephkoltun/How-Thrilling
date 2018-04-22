@@ -7,6 +7,12 @@ Accumulation of Movement
 // Declare kinectron
 var kinectron = null;
 
+var song;
+
+function preload() {
+  song = loadSound('assets/thriller.mp3');
+}
+
 function setup() {
     createCanvas(windowWidth, windowHeight);
 
@@ -14,22 +20,29 @@ function setup() {
 
     // KINECTRON SETUP
     // Define and create an instance of kinectron
-    kinectron = new Kinectron(IPaudience);
+    kinectron = new Kinectron("dancing",
+    {
+      "host": "sk6385.itp.io",
+      "port": "9000",
+      "path": "/peerjs",
+      "secure":"true"
+    });
 
     // Connect with application over peer
     kinectron.makeConnection();
     // Set individual frame callbacks for KINECT 1
     kinectron.setColorCallback(audienceCallback);
+    kinectron.setBodiesCallback(bodiesCallback);
 
-    background(0);
-
+    song.loop();
 }
 
+function bodiesCallback(bodies) {
+  // ignore
+}
 
 function audienceCallback(img) {
-        var mapheight = (540 / 960) * windowWidth;
-
-        loadImage(img.src, function(loadedImage) {
-            image(loadedImage, 0, 0, windowWidth, mapheight);
-        });
+    loadImage(img.src, function(loadedImage) {
+        image(loadedImage, 0, 0, windowWidth, windowHeight);
+    });
 }

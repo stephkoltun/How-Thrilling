@@ -12,10 +12,8 @@ var maxLoop = 4;
 
 var firstSet = true;
 
-
-
 function setup() {
-  var cnv = createCanvas(1600, 600);
+  var cnv = createCanvas(windowWidth, windowHeight);
   cnv.parent("cnv");  // set parent of canvas
   frameRate(30);
   //background(0);
@@ -43,13 +41,10 @@ function setup() {
 }
 
 function draw() {
-
   if (firstSet == false && frameCount % 2 == 0) {
     background(255);
-    image(playFrames[curPlayFrame], 0, 0, 800, 600);
-    var vidWidth = 600 / 480 * 654;
-    // only show the new frame if the body is moving!!
-    image(thrillerVid,800,0,800,600);
+    image(playFrames[curPlayFrame], 0, 0, windowWidth, windowHeight);
+    image(thrillerVid,windowWidth/2,0,windowWidth,windowHeight);
 
     if (curPlayFrame < totalFrames-1) {
       curPlayFrame++;

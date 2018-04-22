@@ -11,10 +11,12 @@ var speed = 1;
 var connect = false;
 
 var danceTime = 0;
-var maxDance = 30 * 20;
+var danceSeconds = 15;
+var maxDance = 30 * danceSeconds;
 
 var exposedTime = 0;
-var maxExposure = 30 * 12;
+var exposedSeconds = 4;
+var maxExposure = 30 * exposedSeconds;
 
 // Declare kinectron
 var kinectron = null;
@@ -28,7 +30,7 @@ var audienceImage;
 var keyImage;
 
 function setup() {
-  var cnv = createCanvas(800, 600);
+  var cnv = createCanvas(windowWidth,windowHeight);
   cnv.parent("cnv");  // set parent of canvas
   frameRate(30);
   //background(0);
@@ -79,7 +81,7 @@ function draw() {
     case (1): // mj video
       var vidWidth = 600 / 480 * 654;
       // only show the new frame if the body is moving!!
-      image(thrillerVid,0,0,vidWidth,600);
+      image(thrillerVid,0,0,windowWidth,windowHeight);
 
       if (danceTime < maxDance) {
           danceTime++;
@@ -92,7 +94,7 @@ function draw() {
     case (2): // elsewhere audience
       clear();
       if (audienceImage != null) {
-        image(audienceImage, 0, 0, 800, 600);
+        image(audienceImage, 0, 0, windowWidth,windowHeight);
       }
 
       //keep track of timing
