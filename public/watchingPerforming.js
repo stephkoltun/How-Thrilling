@@ -30,7 +30,7 @@ var elsewhereKinectron = null;
 const mapheight = (540 / 960) * windowWidth;
 
 var thrillerCutout;
-var vidWidth = windowHeight / 480 * 654;
+var vidWidth = $(window).width / 480 * 654;
 
 function setup() {
     //make sure the body is hidden to begin with

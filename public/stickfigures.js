@@ -67,7 +67,7 @@ function setup() {
             alert("error");
         },
     });
-    var cnv = createCanvas(800, 600);
+    var cnv = createCanvas(windowWidth, windowHeight);
     cnv.parent("cnv");  // set parent of canvas
     frameRate(30);
     //background(0);

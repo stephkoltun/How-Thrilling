@@ -1,7 +1,7 @@
 // Declare kinectron
 var kinectron = null;
 
-const saveForSeconds = 8;
+const saveForSeconds = 6;
 const maxFramesToSave = 30*saveForSeconds;
 var savedFrames = [];
 var playbackFrame = 0;  // tracking number
@@ -11,9 +11,13 @@ var timingSwitch = saveForSeconds * 1000;
 var currentImage;
 
 var live = true;
-const mapheight = (540 / 960) * windowWidth;
+// const widthRatio = $(window).width / $(window).height;
+// const mapheight = 540*widthRatio;
+// const heightRatio = $(window).height / $(window).width;
+// const mapwidth = 960*heightRatio;
 
 var song;
+var thrillerCutout;
 
 function preload() {
   song = loadSound('assets/thriller.mp3');
@@ -40,41 +44,54 @@ function setup() {
 
     background(0);
 
-    song.play();
-    song.jump(71);
+    thrillerCutout = createVideo('assets/thriller.mp4');
+    thrillerCutout.hide();
+    thrillerCutout.loop();
+
+    //song.play();
+    //song.jump(71);
 }
 
 function draw() {
   if (live) {
     if (currentImage != null) {
-      image(currentImage, 0, 0, windowWidth, mapheight);
+      image(currentImage, 0, 0, windowWidth, windowHeight);
+      var crop = thrillerCutout.get(250,100,100,350);
+      image(crop,250,400,100,350);
+      //image(thrillerVid,0,0,vidWidth,windowHeight);
+      //image(currentImage, 0, 0, windowWidth, mapheight);
     }
   } else {
-    image(savedFrames[playbackFrame], 0, 0, windowWidth, mapheight);
+    //image(savedFrames[playbackFrame], 0, 0, windowWidth, mapheight);
+    image(savedFrames[playbackFrame], 0, 0, windowWidth, windowHeight);
 
-    if (Date.now() % timingSwitch == 0) {
-      live = true;
-      song.jump(71);
-      savedFrames = [];
-      playbackFrame = 0;
-    } else {
-      if (playbackFrame < savedFrames.length-1) {
-        playbackFrame++;
-      } else {
-        playbackFrame = 0;
-      }
-    }
-
-    // if (playbackFrame < savedFrames.length-1) {
-    //   playbackFrame++;
-    // } else {
+    // if (Date.now() % timingSwitch <= 5) {
+    //   console.log("change");
     //   live = true;
-    //   song.jump(71);
-    //   // reset tracking
-    //   playbackFrame = 0;
-    //   // empty array
+    //   //song.jump(71);
     //   savedFrames = [];
+    //   playbackFrame = 0;
+    // } else {
+    //   if (playbackFrame < savedFrames.length-1) {
+    //     playbackFrame++;
+    //   } else {
+    //     playbackFrame = 0;
+    //   }
     // }
+
+    if (playbackFrame < savedFrames.length-1) {
+      if (frameCount % 2 == 0) {
+        playbackFrame++;
+      }
+
+    } else {
+      live = true;
+      //song.jump(71);
+      // reset tracking
+      playbackFrame = 0;
+      // empty array
+      savedFrames = [];
+    }
   }
 }
 
@@ -83,14 +100,14 @@ function rgbCallback(img) {
         currentImage = loadedImage;
         if (live) {
           savedFrames.push(loadedImage);
-          if (Date.now() % timingSwitch == 0) {
-            live = false;
-            song.jump(71);
-          }
-          // if (savedFrames.length == maxFramesToSave) {
+          // if (Date.now() % timingSwitch == 0) {
           //   live = false;
-          //   song.jump(71);
+          //   //song.jump(71);
           // }
+          if (savedFrames.length == maxFramesToSave) {
+            live = false;
+            //song.jump(71);
+          }
         }
     });
 }
