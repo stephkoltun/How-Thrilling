@@ -38,7 +38,7 @@ var boneWeight = 10;
 
 // Mapping Kinect data to projecion
 var scvar, xscl, yscl;
-var xshift, yshift;
+var xshift, yshift, yoffset;
 var scl = true;
 
 // Mapping Michael to projection
@@ -85,20 +85,19 @@ function setup() {
     audienceKinectron.makeConnection();
     audienceKinectron.setColorCallback(audienceCallback);
 
-    scvar = 0.6;
-    mjscale = 0.8;
+    scvar = 0.4;
+    mjscale = 1.8;
 
     xscl = (width / 2) * scvar;
     yscl = -(width / 2) * scvar;
     xshift = width / 2;
-    yshift = height / 2 - 25;
+    yshift = height / 2;
+
 
     mjxscl = 1.45 * mjscale;
     mjyscl = 1.45 * mjscale;
     mjxshift = 0;
-    mjyshift = -20;
-
-
+    mjyshift = -50;
 }
 
 function draw() {
@@ -192,11 +191,45 @@ function bodyTracked(body) {
     var id = body.trackingId;
     // When there is a new body, add it
     // only do this if bm is empty
+    var bodies = bm.getBodies();
 
-    if (bm.getBodies().length == 0) {
+    if (bodies.length == 0) {
         console.log("new body");
         bm.add(body);
-    } else if (bm.getBodies().length > 0) {
+
+        var mjFoot = getMJpos(thriller.ankleleft[0]);
+        console.log(mjFoot);
+        var mjHead = getMJpos(thriller.head[0]);
+        var mjHeight = mjFoot.y - mjHead.y;
+        console.log("mj " + mjHeight);
+
+        var thisbody = bm.getBodies();
+        var head = getPos(thisbody[0].getPosition(3));
+        var leftfoot = getPos(thisbody[0].getPosition(18));
+        //console.log(leftfoot);
+        var newYOffset = leftfoot.y - mjFoot.y;
+        yshift = yshift - newYOffset;
+
+        // get the new values
+        head = getPos(thisbody[0].getPosition(3));
+        leftfoot = getPos(thisbody[0].getPosition(18));
+        var height = leftfoot.y - head.y;
+        console.log("me " + height);
+
+        var diffHeight = mjHeight/height;
+
+        scvar = scvar * diffHeight - 0.05;
+        xscl = (width / 2) * scvar;
+        yscl = -(width / 2) * scvar;
+
+        // set offset again
+        head = getPos(thisbody[0].getPosition(3));
+        leftfoot = getPos(thisbody[0].getPosition(18));
+        newYOffset = leftfoot.y - mjFoot.y;
+        yshift = yshift - newYOffset;
+
+
+    } else if (bodies.length > 0) {
         // Otherwise, update it
         if (bm.contains(id)) {
             bm.update(body)
