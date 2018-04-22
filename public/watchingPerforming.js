@@ -1,8 +1,4 @@
 var debug = true;
-
-
-
-
 // Managing kinect bodies
 var bm = new BodyManager();
 var DEATH_TH = 2000;
@@ -18,18 +14,16 @@ var scl = true;
 var watching = true;
 var performerImage;
 
-var seconds = 6;
-
+var seconds = 12;
 var currentTiming = 0;
 var maxTiming = 30 * seconds;
 
-var timingSwitch = seconds * 1000;
 
 // Declare kinectron
 var kinectron = null;
 var elsewhereKinectron = null;
 
-const mapheight = (540 / 960) * windowWidth;
+const mapheight = (540 / 960) * $(window).width;
 
 var thrillerCutout;
 var vidWidth = $(window).width / 480 * 654;
@@ -68,8 +62,8 @@ function setup() {
     kinectron.makeConnection();
     kinectron.setBodiesCallback(bodyCallback);
 
-    teachingKinectron.makeConnection();
-    teachingKinectron.setColorCallback(rgbCallback);
+    elsewhereKinectron.makeConnection();
+    elsewhereKinectron.setColorCallback(rgbCallback);
 
     scvar = 0.6;
 
@@ -84,40 +78,34 @@ function draw() {
 
   if (watching) {
     if (performerImage != null) {
-      image(performerImage, 0, 0, windowWidth, mapheight);
+      image(performerImage, 0, 0, windowWidth, windowHeight);
     }
 
     if (bodies.length != 0) {
-      // if (Date.now() % timingSwitch == 0) {
-      //   watching = false;
-      // }
-
       if (currentTiming < maxTiming) {
         currentTiming++;
       } else {
+        console.log("switch");
         watching = false;
         currentTiming = 0;
       }
     }
   } else {
+    clear();
     // draw cutout michael and stick figures
+    var thrillerCrop = thrillerCutout.get(250,250,100,350);
+    image(thrillerCrop,250,250,100,350);
+    //image(thrillerCutout,0,0,vidWidth,windowHeight);
     if (bodies.length > 0) {
-      image(thrillerVid,0,0,vidWidth,windowHeight);
       drawSkeleton(bodies.length, skelColors);
-      //
-      // if (Date.now() % timingSwitch == 0) {
-      //   watching = true;
-      // }
+    }
 
-      if (currentTiming < maxTiming) {
-        currentTiming++;
-      } else {
-        watching = true;
-        currentTiming = 0;
-      }
+    if (currentTiming < maxTiming) {
+      currentTiming++;
     } else {
+      console.log("switch");
       watching = true;
-      //currentTiming = 0;
+      currentTiming = 0;
     }
   }
 
@@ -138,7 +126,7 @@ function showDebugText() {
 }
 
 
-function colorCallback(img) {
+function rgbCallback(img) {
   // do nothing here
   loadImage(img.src, function(loadedImage) {
       if (watching) {
@@ -147,16 +135,17 @@ function colorCallback(img) {
   });
 }
 
-function bodyCallback(body) {
+function bodyCallback(bodyArray) {
     //find tracked bodies
-    for (var i = 0; i < body.length; i++) {
-        if (body[i].tracked === true) {
-            bodyTracked(body[i]);
+    for (var i = 0; i < bodyArray.bodies.length; i++) {
+        if (bodyArray.bodies[i].tracked === true) {
+            bodyTracked(bodyArray.bodies[i]);
         }
     }
 }
 
 function bodyTracked(body) {
+
     var id = body.trackingId;
     // When there is a new body, add it
     // only do this if bm is empty
@@ -167,10 +156,9 @@ function bodyTracked(body) {
     } else if (bm.getBodies().length > 0) {
         // Otherwise, update it
         if (bm.contains(id)) {
-            bm.update(body)
-        }
-        else {
-            // disregard this extra body
+          bm.update(body)
+        } else {
+          bm.add(body);
         };
     }
 }
