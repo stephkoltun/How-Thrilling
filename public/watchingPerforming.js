@@ -1,4 +1,4 @@
-var debug = true;
+var debug = false;
 // Managing kinect bodies
 var bm = new BodyManager();
 var DEATH_TH = 2000;
@@ -14,7 +14,7 @@ var scl = true;
 var watching = true;
 var performerImage;
 
-var seconds = 12;
+var seconds = 30;
 var currentTiming = 0;
 var maxTiming = 30 * seconds;
 
@@ -35,7 +35,7 @@ function setup() {
     frameRate(30);
     //background(0);
 
-    thrillerCutout = createVideo('assets/thriller.mp4');
+    thrillerCutout = createVideo('assets/thriller-cutout.mp4');
     thrillerCutout.hide();
     thrillerCutout.loop();
 
@@ -65,7 +65,7 @@ function setup() {
     elsewhereKinectron.makeConnection();
     elsewhereKinectron.setColorCallback(rgbCallback);
 
-    scvar = 0.6;
+    scvar = 0.3;
 
     xscl = (width / 2) * scvar;
     yscl = -(width / 2) * scvar;
@@ -93,9 +93,9 @@ function draw() {
   } else {
     clear();
     // draw cutout michael and stick figures
-    var thrillerCrop = thrillerCutout.get(250,250,100,350);
-    image(thrillerCrop,250,250,100,350);
-    //image(thrillerCutout,0,0,vidWidth,windowHeight);
+    //var thrillerCrop = thrillerCutout.get(250,250,100,350);
+    //image(thrillerCrop,250,250,100,350);
+    image(thrillerCutout,-100,100,654*1.4,480*1.4);
     if (bodies.length > 0) {
       drawSkeleton(bodies.length, skelColors);
     }

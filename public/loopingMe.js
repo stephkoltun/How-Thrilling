@@ -35,16 +35,33 @@ function setup() {
   kinectron.setKeyCallback(keyCallback);
   //kinectron.startKey();
 
-  thrillerVid = createVideo('assets/thriller.mp4');
+  thrillerVid = createVideo('assets/thriller-cutout.mp4');
   thrillerVid.hide();
   thrillerVid.loop();
 }
 
 function draw() {
   if (firstSet == false && frameCount % 2 == 0) {
-    background(255);
-    image(playFrames[curPlayFrame], 0, 0, windowWidth, windowHeight);
-    image(thrillerVid,windowWidth/2,0,windowWidth,windowHeight);
+    background(0);
+
+    thrillerVid.loadPixels();
+
+    for (var i = 0; i < thrillerVid.pixels.length; i += 4) {
+      var r = thrillerVid.pixels[i];
+      var g = thrillerVid.pixels[i+1];
+      var b = thrillerVid.pixels[i+2];
+
+      var total = r+g+b;
+
+      if (total < 15) {
+        thrillerVid.pixels[i+3] = 0;
+      }
+    }
+
+    thrillerVid.updatePixels();
+
+    image(thrillerVid,windowWidth/2-200,0,windowWidth,windowHeight);
+    image(playFrames[curPlayFrame], -200, 0, windowWidth, windowHeight);
 
     if (curPlayFrame < totalFrames-1) {
       curPlayFrame++;

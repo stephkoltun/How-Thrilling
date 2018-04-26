@@ -1,7 +1,7 @@
 // Declare kinectron
 var kinectron = null;
 
-const saveForSeconds = 6;
+const saveForSeconds = 10;
 const maxFramesToSave = 30*saveForSeconds;
 var savedFrames = [];
 var playbackFrame = 0;  // tracking number
@@ -25,7 +25,7 @@ function preload() {
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
-    frameRate(30);
+    frameRate(60);
 
     // KINECTRON SETUP
     // Define and create an instance of kinectron
@@ -44,7 +44,7 @@ function setup() {
 
     background(0);
 
-    thrillerCutout = createVideo('assets/thriller.mp4');
+    thrillerCutout = createVideo('assets/thriller-cutout.mp4');
     thrillerCutout.hide();
     thrillerCutout.loop();
 
@@ -55,11 +55,27 @@ function setup() {
 function draw() {
   if (live) {
     if (currentImage != null) {
+
       image(currentImage, 0, 0, windowWidth, windowHeight);
-      var crop = thrillerCutout.get(250,100,100,350);
-      image(crop,250,400,100,350);
-      //image(thrillerVid,0,0,vidWidth,windowHeight);
-      //image(currentImage, 0, 0, windowWidth, mapheight);
+      //var crop = thrillerCutout.get(250,100,100,350);
+      //image(crop,250,400,100,350);
+      thrillerCutout.loadPixels();
+
+
+      for (var i = 0; i < thrillerCutout.pixels.length; i += 4) {
+        var r = thrillerCutout.pixels[i];
+        var g = thrillerCutout.pixels[i+1];
+        var b = thrillerCutout.pixels[i+2];
+
+        var total = r+g+b;
+
+        if (total < 15) {
+          thrillerCutout.pixels[i+3] = 0;
+        }
+      }
+      thrillerCutout.updatePixels();
+
+      image(thrillerCutout,-250, -150, windowWidth*1.15, windowHeight*1.15);
     }
   } else {
     //image(savedFrames[playbackFrame], 0, 0, windowWidth, mapheight);
@@ -81,12 +97,15 @@ function draw() {
     // }
 
     if (playbackFrame < savedFrames.length-1) {
-      if (frameCount % 2 == 0) {
+      if (frameCount % 3 == 0) {
         playbackFrame++;
       }
 
+
+
     } else {
       live = true;
+      clear();
       //song.jump(71);
       // reset tracking
       playbackFrame = 0;

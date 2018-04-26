@@ -5,7 +5,7 @@ Accumulation of Movement
 
 console.log("sketch started");
 
-var debug = true;
+var debug = false;
 var mode = 1;
 var speed = 1;
 var connect = false;
@@ -58,7 +58,7 @@ var keyImage;
 
 function setup() {
     //make sure the body is hidden to begin with
-    var cnv = createCanvas(800, 600);
+    var cnv = createCanvas(windowWidth, windowHeight);
     cnv.parent("cnv");  // set parent of canvas
     frameRate(30);
     //background(0);
@@ -93,13 +93,13 @@ function setup() {
     teachingKinectron.makeConnection();
     teachingKinectron.setKeyCallback(addKey);
 
-    scvar = 0.6;
+    scvar = .9;
     mjscale = .8;
 
     xscl = (width / 2) * scvar;
     yscl = -(width / 2) * scvar;
     xshift = width / 2;
-    yshift = height / 2 - 25;
+    yshift = height / 2 + 100;
 
 
     // populate 2D array
@@ -140,8 +140,7 @@ function draw() {
         drawSkeleton(1, [skelColor]);
 
         if (keyImage != null) {
-          var offset = (960-800)/2*(-1);
-          image(keyImage,offset,100,720,405);
+          image(keyImage,0,0,windowWidth,windowHeight);
         }
 
         break;

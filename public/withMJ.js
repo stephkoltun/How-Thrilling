@@ -68,7 +68,7 @@ function setup() {
   thrillerVid.hide();
   thrillerVid.loop();
 
-  scvar = 0.45;
+  scvar = 0.75;
   xscl = (width / 2) * scvar;
   yscl = -(width / 2) * scvar;
   xshift = width / 2;
@@ -108,8 +108,7 @@ function draw() {
       break;
   }
   if (keyImage != null) {
-    var offset = (960-800)/2*(-1);
-    image(keyImage,offset,100,720,405);
+    image(keyImage,0,150,windowWidth,windowHeight);
   }
 }
 
