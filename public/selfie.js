@@ -3,6 +3,8 @@ Stephanie Koltun
 Accumulation of Movement
 */
 
+
+
 var mode = 1;
 // 1 = selfie 
 // 2 = mj
@@ -53,23 +55,30 @@ function performCallback(img) {
 
 }
 
+var counter = 0;
+
 function draw() {
 
+
     if (mode == 2) { // MJ
+
 
         if (!playing) {
             var vidHeight = windowWidth / 654 * 480;
             thrillerVid.style("visibility", "visible");
             thrillerVid.style("position", "absolute");
-            thrillerVid.style("top", "0");
+            thrillerVid.style("bottom", "0px");
             thrillerVid.style("width", windowWidth + "px");
             thrillerVid.style("height", vidHeight + "px");
             thrillerVid.loop();
             playing = true;
         }
 
-        if (frameCount % 300 == 0) {
+        if (counter < 180) {
+            counter++;
+        } else {
             console.log("switch back to live feed");
+            counter == 0;
             mode = 1;
             if (playing == true) {
                 thrillerVid.style("visibility", "hidden");
@@ -80,6 +89,10 @@ function draw() {
     }
 
     if (mode == 1) {
+        if (frameCount > 9000) {
+            location.reload();
+        }
+
         if (frameCount % 1600 == 0) {
             console.log("switch to MJ");
             mode = 2;

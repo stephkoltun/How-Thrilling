@@ -15,12 +15,12 @@ var connect = false;
 
 var correctJoints = 0;
 var attempts = 0;
-var maxLoop = 4;
+var maxLoop = 3;
 var maxAttempts = maxLoop * 90;
 
 var exposed = false;
 var exposedTime = 0;
-var maxExposure = 30 * 12;
+var maxExposure = 30 * 9;
 
 // manage the flickering
 var screenMode = 1;
@@ -103,18 +103,18 @@ function setup() {
     // thrillerVid = createVideo('thriller.mp4');
     // thrillerVid.style("visibility", "hidden");
 
-    scvar = 0.45;
-    mjscale = .8;
+    scvar = 0.57;
+    mjscale = .75;
 
     xscl = (width / 2) * scvar;
     yscl = -(width / 2) * scvar;
     xshift = width / 2;
-    yshift = height / 2 - 75;
+    yshift = height / 2 + 35;
 
-    mjxscl = 1.45 * mjscale;
-    mjyscl = 1.45 * mjscale;
-    mjxshift = 0;
-    mjyshift = -60;
+    mjxscl = 1.45 + mjscale;
+    mjyscl = 1.45 + mjscale;
+    mjxshift = -100;
+    mjyshift = -120;
 
     background(0);
 
@@ -163,8 +163,7 @@ function bodyTracked(body) {
         // Otherwise, update it
         if (bm.contains(id)) {
             bm.update(body)
-        }
-        else {
+        } else {
             // disregard this extra body
         };
     }
@@ -173,45 +172,55 @@ function bodyTracked(body) {
 
 
 function draw() {
+
     // save the old skeletons
     if (mode == 0 || mode == 1) {
+
         var bodies = bm.getBodies();
-        if (bodies.length != 0) {
 
-                var body = bodies[0];
+        if (bodies.length == 0) {
+            oldSkeleton["head"] = [];
+            oldSkeleton["leftwrist"] = [];
+            oldSkeleton["rightwrist"] = [];
+            oldSkeleton["leftfoot"] = [];
+            oldSkeleton["rightfoot"] = [];
+        }
 
+         else if (bodies.length != 0) {
 
-                // save only the particular joints
+            var body = bodies[0];
 
-                oldSkeleton["head"].push(getPos(body.getPosition(kinectron.HEAD)));
+            // save only the particular joints
 
-                if (oldSkeleton["head"].length > oldJointsNum) {
-                    oldSkeleton["head"].shift();
-                }
+            oldSkeleton["head"].push(getPos(body.getPosition(kinectron.HEAD)));
 
-                oldSkeleton["leftwrist"].push(getPos(body.getPosition(kinectron.WRISTLEFT)));
+            if (oldSkeleton["head"].length > oldJointsNum) {
+                oldSkeleton["head"].shift();
+            }
 
-                if (oldSkeleton["leftwrist"].length > oldJointsNum) {
-                    oldSkeleton["leftwrist"].shift();
-                }
+            oldSkeleton["leftwrist"].push(getPos(body.getPosition(kinectron.WRISTLEFT)));
 
-                oldSkeleton["rightwrist"].push(getPos(body.getPosition(kinectron.WRISTRIGHT)));
+            if (oldSkeleton["leftwrist"].length > oldJointsNum) {
+                oldSkeleton["leftwrist"].shift();
+            }
 
-                if (oldSkeleton["rightwrist"].length > oldJointsNum) {
-                    oldSkeleton["rightwrist"].shift();
-                }
+            oldSkeleton["rightwrist"].push(getPos(body.getPosition(kinectron.WRISTRIGHT)));
 
-                oldSkeleton["leftfoot"].push(getPos(body.getPosition(kinectron.ANKLELEFT)));
+            if (oldSkeleton["rightwrist"].length > oldJointsNum) {
+                oldSkeleton["rightwrist"].shift();
+            }
 
-                if (oldSkeleton["leftfoot"].length > oldJointsNum) {
-                    oldSkeleton["leftfoot"].shift();
-                }
+            oldSkeleton["leftfoot"].push(getPos(body.getPosition(kinectron.ANKLELEFT)));
 
-                oldSkeleton["rightfoot"].push(getPos(body.getPosition(kinectron.ANKLERIGHT)));
+            if (oldSkeleton["leftfoot"].length > oldJointsNum) {
+                oldSkeleton["leftfoot"].shift();
+            }
 
-                if (oldSkeleton["rightfoot"].length > oldJointsNum) {
-                    oldSkeleton["rightfoot"].shift();
-                }
+            oldSkeleton["rightfoot"].push(getPos(body.getPosition(kinectron.ANKLERIGHT)));
+
+            if (oldSkeleton["rightfoot"].length > oldJointsNum) {
+                oldSkeleton["rightfoot"].shift();
+            }
 
         }
 
@@ -225,30 +234,30 @@ function draw() {
             drawAccumThriller();
             drawThriller();
             // draw tracked body
-            
-            if (oldSkeleton["rightfoot"].length == oldJointsNum) {
-                drawAccumSkeleton();
 
-                // compare joints
-                if (frameCount % 30 == 0) {
-                    switch (correctJoints) {
-                        case (0):
-                            compareJoint(oldSkeleton["rightfoot"], thriller.ankleleft);
-                            break;
-                        case (1):
-                            compareJoint(oldSkeleton["leftfoot"], thriller.ankleright);
-                            break;
-                        case (2):
-                            compareJoint(oldSkeleton["rightwrist"], thriller.wristleft);
-                            break;
-                        case (3):
-                            compareJoint(oldSkeleton["leftwrist"], thriller.wristright);
-                        case (4):
-                            compareJoint(oldSkeleton["head"], thriller.head);
-                            break;
-                    }
-                }
-            };
+            // if (oldSkeleton["rightfoot"].length == oldJointsNum) {
+            //     drawAccumSkeleton();
+
+            //     // compare joints
+            //     if (frameCount % 30 == 0) {
+            //         switch (correctJoints) {
+            //             case (0):
+            //                 compareJoint(oldSkeleton["rightfoot"], thriller.ankleleft);
+            //                 break;
+            //             case (1):
+            //                 compareJoint(oldSkeleton["leftfoot"], thriller.ankleright);
+            //                 break;
+            //             case (2):
+            //                 compareJoint(oldSkeleton["rightwrist"], thriller.wristleft);
+            //                 break;
+            //             case (3):
+            //                 compareJoint(oldSkeleton["leftwrist"], thriller.wristright);
+            //             case (4):
+            //                 compareJoint(oldSkeleton["head"], thriller.head);
+            //                 break;
+            //         }
+            //     }
+            // };
 
             if (bm.getBodies().length > 0) {
                 // MONITOR ATTEMPTS
@@ -294,10 +303,6 @@ function draw() {
             }
 
             drawSkeleton();
-
-            if (connect) {
-                drawConnections();
-            }
             break;
         case (2): // MJ
             if (!playing) {
@@ -766,7 +771,8 @@ function keyPressed() {
             mjyshift -= 50;
             break;
         case 66: // b 
-            mjxshift += 20;
+            mjxshift -= 20;
+            break;
         case 85: // u 
             mjscale += 0.05;
             mjxscl = round(1.45 + mjscale);
